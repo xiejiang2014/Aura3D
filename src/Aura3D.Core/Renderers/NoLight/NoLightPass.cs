@@ -14,6 +14,7 @@ public class NoLightPass : RenderPass
         this.FragmentShader = ShaderResource.NoLightFrag;
         this.VertexShader = ShaderResource.NoLightVert;
         ShaderName = nameof(NoLightPass);
+        defaultBaseColor = Resources.Texture.CreateFromColor(Color.White);
     }
 
     public override void BeforeRender(Camera camera)
@@ -25,7 +26,6 @@ public class NoLightPass : RenderPass
 
         gl.DepthMask(true);
         gl.DepthFunc(DepthFunction.Less);
-        defaultBaseColor = Resources.Texture.CreateFromColor(Color.White);
 
     }
 

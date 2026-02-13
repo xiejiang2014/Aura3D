@@ -12,7 +12,7 @@ uniform float alphaCutoff;
 
 void main()
 {
-	baseColor = texture(BaseColorTexture, vTexCoord);
+	vec4 baseColor = texture(BaseColorTexture, vTexCoord);
 
 	#if defined(BLENDMODE_MASKED) || defined(BLENDMODE_TRANSLUCENT)
 		if (baseColor.a <= alphaCutoff)
