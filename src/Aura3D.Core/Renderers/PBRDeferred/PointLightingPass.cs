@@ -40,10 +40,12 @@ public class PointLightingPass : RenderPass
         Span<Matrix4x4> ShadowViews = stackalloc Matrix4x4[6];
         foreach (var pl in renderPipeline.PointLights)
         {
+            if (pl.Enable == false)
+                continue;
             if (pl.CastShadow == false)
-                UseShader("ENABLE_POINT_LIGHT");
+                UseShader("ENABLE_POINT_LIGHT", "ENBALE_DEFERRED_SHADING");
             else
-                UseShader("ENABLE_POINT_LIGHT", "ENABLE_SHADOWS");
+                UseShader("ENABLE_POINT_LIGHT", "ENABLE_SHADOWS", "ENBALE_DEFERRED_SHADING");
             UseShader_Internal(null);
 
 

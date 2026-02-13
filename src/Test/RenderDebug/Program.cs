@@ -15,7 +15,7 @@ using System.Numerics;
 var window = Window.Create(WindowOptions.Default);
 ControlRenderTarget controlRenderTarget = new ControlRenderTarget();
 Camera.ControlRenderTarget = controlRenderTarget;
-Scene scene = new Scene(scene => new BlinnPhongPipeline(scene));
+Scene scene = new Scene(scene => new PBRDeferredPipeline(scene));
 window.Load += () =>
 {
     controlRenderTarget.Width = (uint)(window.Size.X);
@@ -61,42 +61,12 @@ window.Load += () =>
     camera.SkyboxTexture = cubeTexture;
 
 
-    var (model, animations) = ModelLoader.LoadGlbModelAndAnimations($"../../../../../../example/Example/Assets/Models/lion_head_1k.glb");
+    var (model, animations) = ModelLoader.LoadGlbModelAndAnimations($"../../../../../../example/Example/Assets/Models/lightbulb_01_1k.glb");
 
     AddNode(model);
 
     camera.FitToBoundingBox(model.BoundingBox, 1);
 
-    //DirectionalLight dl = new DirectionalLight();
-
-    //dl.CastShadow = true;
-
-    //dl.RotationDegrees = new Vector3(-45, 45, 0);
-
-    //dl.ShadowConfig.Width = 2;
-    //dl.ShadowConfig.Height = 2;
-    //dl.ShadowConfig.NearPlane = 0.001f;
-    //dl.ShadowConfig.FarPlane = 1;
-    //AddNode(dl);
-
-    SpotLight sp = new SpotLight();
-
-    sp.Position = model.Position + model.Right;
-
-    sp.Rotation = new Vector3(0, 90, 0);
-
-
-    sp.LightColor = Color.White;
-
-    sp.CastShadow = false;
-
-    sp.InnerConeAngleDegree = 50;
-
-    sp.OuterAngleDegree = 55;
-
-    sp.AttenuationRadius = 2;
-
-    AddNode(sp);
 
     var mesh = new Mesh();
 
@@ -108,9 +78,41 @@ window.Load += () =>
 
     mesh.Material.Normal = Texture.CreateFromColor(Color.FromArgb(128, 128, 255));
 
-    mesh.Position = model.Position      ;
+    mesh.RotationDegrees = new Vector3(90, 0, 0);
+
 
     AddNode(mesh);
+
+    DirectionalLight dl = new DirectionalLight();
+
+    dl.CastShadow = true;
+
+    dl.RotationDegrees = new Vector3(-45, 45, 0);
+
+    dl.ShadowConfig.Width = 2;
+    dl.ShadowConfig.Height = 2;
+    dl.ShadowConfig.NearPlane = 0.001f;
+    dl.ShadowConfig.FarPlane = 1;
+    AddNode(dl);
+
+    //SpotLight sp = new SpotLight();
+
+    //sp.Position = model.Position + model.Up * 2 ;
+
+    //sp.RotationDegrees = new Vector3(-90, 0, 0);
+
+    //sp.LightColor = Color.White;
+
+    //sp.CastShadow = true;
+
+    //sp.InnerConeAngleDegree = 50;
+
+    //sp.OuterAngleDegree = 55;
+
+    //sp.AttenuationRadius = 40;
+
+    //AddNode(sp);
+
 
 
 
@@ -118,9 +120,11 @@ window.Load += () =>
 
     //pl.Position = camera.Position;
 
-    //pl.AttenuationRadius = 1;
+    //pl.AttenuationRadius = 10;
 
     //pl.CastShadow = true;
+
+    //pl.Position = model.Position + model.Up * 2;
 
     //AddNode(pl);
 };

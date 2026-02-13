@@ -2,16 +2,33 @@
 precision highp float;
 //{{defines}}
 
-in vec2 TexCoords;
 
 layout (location = 0) out vec4 FragColor;
 
+
+#ifdef ENBALE_DEFERRED_SHADING
+
+in vec2 TexCoords;
 uniform sampler2D gBufferBaseColorMetalness;
 uniform sampler2D gBufferNormalRoughness;
 uniform sampler2D depthTexture;
 
 uniform mat4 invProjection;
 uniform mat4 invView;
+
+#else
+
+uniform sampler2D Texture_BaseColor;
+uniform sampler2D Texture_Normal;
+uniform sampler2D Texture_MetallicRoughness;
+uniform sampler2D Texture_Emissive;
+uniform sampler2D Texture_Occlusion;
+
+
+in vec2 vTexCoord;
+in vec3 vFragPosition;
+in mat3 vTBN;
+#endif
 
 uniform vec3 viewPos;
 
@@ -48,6 +65,7 @@ uniform sampler2D spotLightshadowMap;
 
 const float PI = 3.14159265359;
 
+#ifdef ENBALE_DEFERRED_SHADING
 vec3 reconstructWorldPosFromDepth(vec2 texCoords) {
     float depth = texture(depthTexture, texCoords).r;
     vec3 ndc;
@@ -59,6 +77,7 @@ vec3 reconstructWorldPosFromDepth(vec2 texCoords) {
     vec4 worldPos = invView * viewPos;
     return worldPos.xyz;
 }
+#endif
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
     float a = roughness * roughness;
@@ -248,6 +267,7 @@ vec3 calcSingleSpotLight(vec3 N, vec3 V, vec3 fragPos, vec3 albedo, float metaln
 #endif
 
 void main() {
+#ifdef ENBALE_DEFERRED_SHADING
     vec4 baseColorMetal = texture(gBufferBaseColorMetalness, TexCoords);
     vec3 albedo = baseColorMetal.xyz;
     float metalness = baseColorMetal.a;
@@ -257,6 +277,27 @@ void main() {
     float roughness = clamp(normalRough.a, 0.01, 0.99);
 
     vec3 fragPosWorld = reconstructWorldPosFromDepth(TexCoords);
+
+#else
+    vec4 baseColor = texture(Texture_BaseColor, vTexCoord);
+    vec3 normal = texture(Texture_Normal, vTexCoord).xyz;
+    vec4 metalness_roughness = texture(Texture_MetallicRoughness, vTexCoord);
+    
+    normal = normalize(normal.xyz * 2.0 - 1.0);
+    normal = normalize(vTBN * normal);
+    
+	if (!gl_FrontFacing) 
+	{
+		normal = -normal;
+	}
+    vec3 N = normal;
+    vec3 albedo = baseColor.rgb;
+    float metalness = metalness_roughness.x;
+    float roughness = metalness_roughness.y;
+
+    vec3 fragPosWorld = vFragPosition;
+
+#endif
     vec3 V = normalize(viewPos - fragPosWorld);
 
     vec3 lightContribution = vec3(0.0);
@@ -269,6 +310,17 @@ void main() {
     #ifdef ENABLE_SPOT_LIGHT
     lightContribution = calcSingleSpotLight(N, V, fragPosWorld, albedo, metalness, roughness);
     #endif
+#ifdef ENBALE_DEFERRED_SHADING
+    float alpha = 1.0;
+#endif
 
-    FragColor = vec4(lightContribution, 1.0);
+#ifdef BLENDMODE_TRANSLUCENT
+#ifdef IS_FIRST_LIGHT
+    float alpha = baseColor.a;
+#else
+    float alpha = 0.0;
+#endif
+    
+#endif
+    FragColor = vec4(lightContribution, alpha);
 }

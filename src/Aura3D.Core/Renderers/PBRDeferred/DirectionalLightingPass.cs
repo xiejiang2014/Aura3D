@@ -47,10 +47,12 @@ internal class DirectionalLightingPass : RenderPass
 
         foreach (var dl in renderPipeline.DirectionalLights)
         {
+            if (dl.Enable == false)
+                continue;
             if (dl.CastShadow == false)
-                UseShader("ENABLE_DIR_LIGHT");
+                UseShader("ENABLE_DIR_LIGHT", "ENBALE_DEFERRED_SHADING");
             else
-                UseShader("ENABLE_DIR_LIGHT", "ENABLE_SHADOWS");
+                UseShader("ENABLE_DIR_LIGHT", "ENABLE_SHADOWS", "ENBALE_DEFERRED_SHADING");
 
             UseShader_Internal(null);
             ClearTextureUnit();

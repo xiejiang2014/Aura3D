@@ -35,13 +35,15 @@ internal class SpotLightingPass : RenderPass
         var gBufferEmissiveOcclusion = rt.GetTexture("EmissiveOcclusion");
         var depthTexture = rt.DepthStencilTexture;
 
-        foreach (var sp in renderPipeline.SpotLights)
+        foreach (var sl in renderPipeline.SpotLights)
         {
+            if (sl.Enable == false)
+                continue;
 
-            if (sp.CastShadow == false)
-                UseShader("ENABLE_SPOT_LIGHT");
+            if (sl.CastShadow == false)
+                UseShader("ENABLE_SPOT_LIGHT", "ENBALE_DEFERRED_SHADING");
             else
-                UseShader("ENABLE_SPOT_LIGHT", "ENABLE_SHADOWS");
+                UseShader("ENABLE_SPOT_LIGHT", "ENABLE_SHADOWS", "ENBALE_DEFERRED_SHADING");
             UseShader_Internal(null);
 
             ClearTextureUnit();
@@ -54,22 +56,22 @@ internal class SpotLightingPass : RenderPass
             UniformMatrix4("invProjection", camera.Projection.Inverse());
             UniformMatrix4("invView", camera.View.Inverse());
 
-            UniformVector3("spotLightPosition", sp.WorldTransform.Translation);
-            UniformVector3("spotLightDirection", sp.Forward);
-            UniformColor("spotLightColor", sp.LightColor);
+            UniformVector3("spotLightPosition", sl.WorldTransform.Translation);
+            UniformVector3("spotLightDirection", sl.Forward);
+            UniformColor("spotLightColor", sl.LightColor);
             UniformFloat("spotLightIntensity", 1.0f);
-            UniformFloat("spotLightCutOff", MathF.Cos(sp.InnerConeAngleDegree.DegreeToRadians()));
-            UniformFloat("spotLightOuterCutOff", MathF.Cos(sp.OuterAngleDegree.DegreeToRadians()));
-            UniformFloat("radius", sp.AttenuationRadius);
-            UniformFloat("softRatio", sp.SoftRatio);
+            UniformFloat("spotLightCutOff", MathF.Cos(sl.InnerConeAngleDegree.DegreeToRadians()));
+            UniformFloat("spotLightOuterCutOff", MathF.Cos(sl.OuterAngleDegree.DegreeToRadians()));
+            UniformFloat("radius", sl.AttenuationRadius);
+            UniformFloat("softRatio", sl.SoftRatio);
 
-            if (sp.CastShadow)
+            if (sl.CastShadow)
             {
-                var position = sp.WorldTransform.Translation;
-                var shadowView = Matrix4x4.CreateLookAt(position, position + sp.WorldTransform.ForwardVector(), sp.WorldTransform.UpVector());
-                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(sp.OuterAngleDegree.DegreeToRadians(), sp.ShadowMapRenderTarget.Width / (float)sp.ShadowMapRenderTarget.Height, sp.ShadowConfig.NearPlane, sp.ShadowConfig.FarPlane);
+                var position = sl.WorldTransform.Translation;
+                var shadowView = Matrix4x4.CreateLookAt(position, position + sl.WorldTransform.ForwardVector(), sl.WorldTransform.UpVector());
+                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(sl.OuterAngleDegree.DegreeToRadians(), sl.ShadowMapRenderTarget.Width / (float)sl.ShadowMapRenderTarget.Height, sl.ShadowConfig.NearPlane, sl.ShadowConfig.FarPlane);
 
-                UniformTexture($"spotLightshadowMap", sp.ShadowMapRenderTarget.DepthStencilTexture);
+                UniformTexture($"spotLightshadowMap", sl.ShadowMapRenderTarget.DepthStencilTexture);
                 UniformMatrix4($"spotLightshadowMapMatrix", shadowView * shadowProjection);
 
             }

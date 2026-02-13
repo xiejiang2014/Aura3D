@@ -32,7 +32,6 @@ uniform mat4 normalMatrix;
 out vec2 vTexCoord;
 out vec3 vFragPosition;
 out mat3 vTBN;
-out vec3 vNormal;
 
 
 void main()
@@ -44,7 +43,6 @@ void main()
     vec3 N = normalize(mat3(normalMatrix) * normal); 
 	mat3 TBN = mat3(T, B, N);
 	vTBN = TBN;
-	vNormal =  N;
 
 
 #ifdef SKINNED_MESH

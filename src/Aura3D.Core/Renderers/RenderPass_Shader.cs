@@ -20,11 +20,17 @@ public partial class RenderPass
 
     public Shader? CurrentShader { get; private set; } = null;
 
-    string[] defines = [];
+    List<string> defines = [];
 
     public void UseShader(params string[] defines)
     {
-        this.defines = defines;
+        this.defines = new(defines);
+    }
+
+    public void AddDefines(params string[] defines)
+    {
+        this.defines.AddRange(defines);
+
     }
 
     protected void UseShader_Internal(Mesh? mesh)
@@ -46,7 +52,7 @@ public partial class RenderPass
                     if (fragmentShader == null)
                         fragmentShader = FragmentShader;
 
-                    shader = CreateShaderProgram(defines, vertexShader, fragmentShader);
+                    shader = CreateShaderProgram(defines.ToArray(), vertexShader, fragmentShader);
 
                     mesh.Material.Shaders[name] = shader;
                 }
@@ -57,7 +63,7 @@ public partial class RenderPass
         {
             if (Shaders.TryGetValue(name, out shader) == false)
             {
-                shader = CreateShaderProgram(defines, VertexShader, FragmentShader);
+                shader = CreateShaderProgram(defines.ToArray(), VertexShader, FragmentShader);
                 Shaders[name] = shader;
             }
         }
