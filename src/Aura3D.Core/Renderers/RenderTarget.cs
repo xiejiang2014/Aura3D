@@ -122,11 +122,11 @@ public class RenderTarget : IGpuResource, IRenderTarget
         throw new KeyNotFoundException($"RenderTarget texture '{name}' not found");
     }
 
-
+    public TextureFormat DepthTextureFormat { get; private set; }
     public RenderTarget SetDepthTexture(TextureFormat textureFormat)
     {
         depthStencilTexture.InternalFormat = textureFormat;
-
+        DepthTextureFormat = textureFormat;
         return this;
     }
 

@@ -18,8 +18,11 @@ internal class TranslucentPass : RenderPass
     Resources.Texture defaultEmissive;
 
     Resources.Texture defaultOcclusion;
-    public TranslucentPass(RenderPipeline renderPipeline) : base(renderPipeline)
+    string GbufferRenderTargetName;
+    public TranslucentPass(RenderPipeline renderPipeline, string gbufferRendertarget) : base(renderPipeline)
     {
+        GbufferRenderTargetName = gbufferRendertarget;
+
         VertexShader = ShaderResource.MeshVert;
 
         FragmentShader = ShaderResource.pbr_directionallight_lighting_pass_frag;
@@ -52,13 +55,41 @@ internal class TranslucentPass : RenderPass
     {
         BindOutPutRenderTarget(camera);
 
-        gl.Disable(EnableCap.DepthTest);
+        if (outputRenderTargetName == null)
+            throw new Exception();
+
+        var gbuffer = GetRenderTarget(GbufferRenderTargetName,
+                new System.Drawing.Size((int)camera.RenderTarget.Width, (int)camera.RenderTarget.Height));
+
+        gl.FramebufferTexture2D(GLEnum.Framebuffer, gbuffer.DepthTextureFormat.ToGlAttachment(), GLEnum.Texture2D, gbuffer.DepthStencilTexture.TextureId, 0);
+
+        var error = gl.GetError();
+        
+        gl.Enable(EnableCap.DepthTest);
+
+        gl.DepthMask(false);
 
         gl.Enable(EnableCap.Blend);
 
         gl.BlendFuncSeparate(BlendingFactor.One, BlendingFactor.One, BlendingFactor.Zero, BlendingFactor.One);
 
         gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
+
+    }
+    public override void AfterRender(Camera camera)
+    {
+        if (outputRenderTargetName == null)
+            throw new Exception();
+        var outputRt = GetRenderTarget(outputRenderTargetName,
+                new System.Drawing.Size((int)camera.RenderTarget.Width, (int)camera.RenderTarget.Height));
+
+        gl.BindFramebuffer(GLEnum.Framebuffer, outputRt.FrameBufferId);
+        gl.FramebufferTexture2D(GLEnum.Framebuffer, outputRt.DepthTextureFormat.ToGlAttachment(), GLEnum.Texture2D, outputRt.DepthStencilTexture.TextureId, 0);
+
+        var error = gl.GetError();
+
+        gl.DepthMask(true);
+
 
     }
 
@@ -75,10 +106,6 @@ internal class TranslucentPass : RenderPass
 
     }
 
-    public override void AfterRender(Camera camera)
-    {
-        base.AfterRender(camera);
-    }
 
     public void RenderTranslucentMesh(Mesh mesh, Matrix4x4 view, Matrix4x4 projection)
     {
