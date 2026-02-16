@@ -59,8 +59,15 @@ public class ShadowMapPass : RenderPass
             if (index++ >= pointLightLimit)
                 break;
 
-            gl.Viewport(0, 0, pointLight.ShadowMapRenderTarget.Width, pointLight.ShadowMapRenderTarget.Height);
-            gl.BindFramebuffer(GLEnum.Framebuffer, pointLight.ShadowMapRenderTarget.FrameBufferId);
+            var rt = pointLight.GetPipelineGpuResource<CubeRenderTarget>("ShadowMapRenderTarget");
+
+            if (rt == null)
+            {
+                rt = new CubeRenderTarget().SetDepthTexture(TextureFormat.DepthComponent24).SetSize(1024, 1024);
+            }
+
+            gl.Viewport(0, 0, rt.Width, rt.Height);
+            gl.BindFramebuffer(GLEnum.Framebuffer, rt.FrameBufferId);
 
             var position = pointLight.WorldTransform.Translation;
 
@@ -72,12 +79,11 @@ public class ShadowMapPass : RenderPass
             views[5] = Matrix4x4.CreateLookAt(position, position + new Vector3(0, 0, -1), new Vector3(0, -1, 0));
 
 
-            var projection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), pointLight.ShadowMapRenderTarget.Width/(float)pointLight.ShadowMapRenderTarget.Height, pointLight.ShadowConfig.NearPlane, pointLight.ShadowConfig.FarPlane);
-
-
+            var projection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), rt.Width/(float)rt.Height, pointLight.ShadowConfig.NearPlane, pointLight.ShadowConfig.FarPlane);
+           
             for (int i = 0; i < 6; i++)
             {
-                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.TextureCubeMapPositiveX + i, pointLight.ShadowMapRenderTarget.DepthStencilTexture.TextureId, 0);
+                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.TextureCubeMapPositiveX + i, rt.DepthStencilTexture.TextureId, 0);
 
 
                 gl.Clear(ClearBufferMask.DepthBufferBit);
@@ -99,15 +105,24 @@ public class ShadowMapPass : RenderPass
             if (index++ >= spotLightLimit)
                 break;
 
-            gl.Viewport(0, 0, spotLight.ShadowMapRenderTarget.Width, spotLight.ShadowMapRenderTarget.Height);
-            gl.BindFramebuffer(GLEnum.Framebuffer, spotLight.ShadowMapRenderTarget.FrameBufferId);
+            var rt = spotLight.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+
+            if (rt == null)
+            {
+                rt = new RenderTarget().SetDepthTexture(TextureFormat.DepthComponent24).SetSize(1024, 1024);
+                rt.Upload(gl);
+                spotLight.SetPipelineGpuResource("ShadowMapRenderTarget", rt);
+            }
+
+            gl.Viewport(0, 0, rt.Width, rt.Height);
+            gl.BindFramebuffer(GLEnum.Framebuffer, rt.FrameBufferId);
 
             gl.Clear(ClearBufferMask.DepthBufferBit);
             gl.ClearDepth(1.0f);
 
             var position = spotLight.WorldTransform.Translation;
             var view = Matrix4x4.CreateLookAt(position, position + spotLight.WorldTransform.ForwardVector(), spotLight.WorldTransform.UpVector());
-            var projection = Matrix4x4.CreatePerspectiveFieldOfView(spotLight.OuterAngleDegree.DegreeToRadians(), spotLight.ShadowMapRenderTarget.Width / (float)spotLight.ShadowMapRenderTarget.Height, spotLight.ShadowConfig.NearPlane, spotLight.ShadowConfig.FarPlane);
+            var projection = Matrix4x4.CreatePerspectiveFieldOfView(spotLight.OuterAngleDegree.DegreeToRadians(), rt.Width / (float)rt.Height, spotLight.ShadowConfig.NearPlane, spotLight.ShadowConfig.FarPlane);
 
             RenderMesh(view, projection);
         }
@@ -122,9 +137,18 @@ public class ShadowMapPass : RenderPass
             if (index++ >= directionalLightLimit)
                 break;
 
-            gl.Viewport(0, 0, directionalLight.ShadowMapRenderTarget.Width, directionalLight.ShadowMapRenderTarget.Height);
+            var rt = directionalLight.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
 
-            gl.BindFramebuffer(GLEnum.Framebuffer, directionalLight.ShadowMapRenderTarget.FrameBufferId);
+            if (rt == null)
+            {
+                rt = new RenderTarget().SetDepthTexture(TextureFormat.DepthComponent24).SetSize(1024, 1024);
+                rt.Upload(gl);
+                directionalLight.SetPipelineGpuResource("ShadowMapRenderTarget", rt);
+            }
+
+            gl.Viewport(0, 0, rt.Width, rt.Height);
+
+            gl.BindFramebuffer(GLEnum.Framebuffer, rt.FrameBufferId);
             gl.Clear(ClearBufferMask.DepthBufferBit);
             gl.ClearDepth(1.0f);
 

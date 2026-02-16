@@ -9,7 +9,6 @@ public class PointLight : Light
 {
     public PointLight()
     {
-        ShadowMapRenderTarget = new CubeRenderTarget().SetDepthTexture(TextureFormat.DepthComponent24).SetSize(1024, 1024);
     }
 
 
@@ -26,12 +25,7 @@ public class PointLight : Light
     public float LuminousIntensity { get; set; } = 1000;
 
     public float Intensity => LuminousIntensity * 0.001f;
-    public CubeRenderTarget ShadowMapRenderTarget { get; private set; }
 
-    public override List<IGpuResource> GetGpuResources()
-    {
-        return [ShadowMapRenderTarget];
-    }
 
 }
 

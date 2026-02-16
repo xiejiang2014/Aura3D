@@ -104,6 +104,11 @@ public class Scene
         {
             RemoveNode(child);
         }
+        foreach(var gpuResource in node.GetGpuResources())
+        {
+            gpuResource.Destroy(RenderPipeline.gl!);            
+        }
+        node.ClearPipelineGpuResources();
     }
 
     public void AddNodeTransformDirty(Node node)

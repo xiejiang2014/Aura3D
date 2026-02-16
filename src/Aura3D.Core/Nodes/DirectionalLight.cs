@@ -8,7 +8,7 @@ public class DirectionalLight : Light
 {
     public DirectionalLight()
     {
-        ShadowMapRenderTarget = new RenderTarget().SetDepthTexture(TextureFormat.DepthComponent24).SetSize(1024, 1024);
+        // ShadowMapRenderTarget = new RenderTarget().SetDepthTexture(TextureFormat.DepthComponent24).SetSize(1024, 1024);
     }
 
     public DirectionalLightShadowMapConfig ShadowConfig = new DirectionalLightShadowMapConfig
@@ -19,12 +19,14 @@ public class DirectionalLight : Light
         FarPlane = 50
     };
 
-    public RenderTarget ShadowMapRenderTarget { get; private set; }
+    // public RenderTarget ShadowMapRenderTarget { get; private set; }
 
+    /*
     public override List<IGpuResource> GetGpuResources()
     {
         return [ShadowMapRenderTarget];
     }
+    */
 
     public float Irradiance { get; set; } = 80000;
     public float Intensity => Irradiance * 0.00001f;

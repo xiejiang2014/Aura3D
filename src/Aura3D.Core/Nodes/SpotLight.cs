@@ -8,7 +8,6 @@ public class SpotLight : Light
 {
     public SpotLight()
     {
-        ShadowMapRenderTarget = new RenderTarget().SetDepthTexture(TextureFormat.DepthComponent24).SetSize(1024, 1024);
     }
 
     public ShadowConfig ShadowConfig = new ShadowConfig
@@ -17,7 +16,6 @@ public class SpotLight : Light
         FarPlane = 100
     };
 
-    public RenderTarget ShadowMapRenderTarget { get; private set; }
     public float InnerConeAngleDegree { get; set; } = 10;
     public float OuterAngleDegree { get; set; } = 15;
 
@@ -28,8 +26,4 @@ public class SpotLight : Light
     public float AttenuationRadius { get; set; } = 10f; // 光照衰减半径
     public float SoftRatio { get; set; } = 0.9f; // 阴影柔化半径
 
-    public override List<IGpuResource> GetGpuResources()
-    {
-        return [ShadowMapRenderTarget];
-    }
 }

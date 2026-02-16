@@ -67,7 +67,9 @@ public class PointLightingPass : RenderPass
             UniformFloat("radius", pl.AttenuationRadius);
             UniformFloat("softRatio", pl.SoftRatio);
 
-            if (pl.CastShadow)
+            var shadowmap = pl.GetPipelineGpuResource<CubeRenderTarget>("ShadowMapRenderTarget");
+
+            if (pl.CastShadow && shadowmap != null)
             {
                 var position = pl.WorldTransform.Translation;
 
@@ -79,10 +81,10 @@ public class PointLightingPass : RenderPass
                 ShadowViews[5] = Matrix4x4.CreateLookAt(position, position + new Vector3(0, 0, -1), new Vector3(0, -1, 0));
 
 
-                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), pl.ShadowMapRenderTarget.Width / (float)pl.ShadowMapRenderTarget.Height, pl.ShadowConfig.NearPlane, pl.ShadowConfig.FarPlane);
+                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), shadowmap.Width / (float)shadowmap.Height, pl.ShadowConfig.NearPlane, pl.ShadowConfig.FarPlane);
 
 
-                UniformTextureCubeMap("pointLightShadowMap", pl.ShadowMapRenderTarget.DepthStencilTexture);
+                UniformTextureCubeMap("pointLightShadowMap", shadowmap.DepthStencilTexture);
                 for (int i = 0; i < 6; i++)
                 {
                     UniformMatrix4($"pointShadowMapMatrices[{i}]", ShadowViews[i] * shadowProjection);

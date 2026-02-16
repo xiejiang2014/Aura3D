@@ -3,6 +3,7 @@ using Aura3D.Core.Renderers.Common;
 using Aura3D.Core.Scenes;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,18 @@ namespace Aura3D.Core.Renderers.PBRDeferred;
 
 public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
 {
+
+    public Resources.Texture DefaultBaseColor { get; private set; }
+
+    public Resources.Texture DefaultNormal { get; private set; }
+
+    public Resources.Texture DefaultMetallicRoughness { get; private set; }
+
+    public Resources.Texture DefaultEmissive { get; private set; }
+
+    public Resources.Texture DefaultOcclusion { get; private set; }
+
+
     public PBRDeferredPipeline(Scene scene) : base(scene)
     {
         var shadowPass = new ShadowMapPass(this);
@@ -30,12 +43,13 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
 
         RegisterRenderPass(new CopyPass(this, "BaseRenderTarget", "Color").SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
 
+        RegisterRenderPass(new TranslucentConstantAmbientPass(this, "GBuffer").SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
+
         RegisterRenderPass(new TranslucentPass(this, "GBuffer").SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
 
         RegisterRenderPass(new ToneMappingPass(this, "BackgroundRenderTarget", "Color").SetOutPutRenderTarget("GammaOutput"), RenderPassGroup.EveryCamera);
 
         RegisterRenderPass(new GammaCorrectionPass(this, "GammaOutput", "Color").SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
-
 
         RegisterRenderPass(new FxaaPass(this, "BackgroundRenderTarget", "Color"), RenderPassGroup.EveryCamera);
 
@@ -58,6 +72,21 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
         RegisterRenderTarget("GammaOutput")
             .AddTexture("Color", TextureFormat.Rgb16f)
             .SetDepthTexture(TextureFormat.DepthComponent16);
+
+
+        DefaultBaseColor = Resources.Texture.CreateFromColor(Color.White);
+
+
+        DefaultNormal = Resources.Texture.CreateFromColor(Color.FromArgb(128, 128, 255));
+
+
+        DefaultMetallicRoughness = Resources.Texture.CreateFromColor(Color.FromArgb(0, 127, 0));
+
+
+        DefaultEmissive = Resources.Texture.CreateFromColor(Color.Black);
+
+        DefaultOcclusion = Resources.Texture.CreateFromColor(Color.White);
+
     }
 
     public static RenderPipeline CreateInstance(Scene scene) => new PBRDeferredPipeline(scene);
@@ -70,4 +99,16 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
         SortMeshes(VisibleMeshesInCamera, camera);
         gl.Viewport(0, 0, camera.RenderTarget.Width, camera.RenderTarget.Height);
     }
+
+    public override void Setup()
+    {
+        if (gl == null)
+            return;
+        DefaultBaseColor.Upload(gl);
+        DefaultNormal.Upload(gl);
+        DefaultMetallicRoughness.Upload(gl);
+        DefaultEmissive.Upload(gl);
+        DefaultOcclusion.Upload(gl);
+    }
+
 }

@@ -115,12 +115,14 @@ public class LightPass : RenderPass
 
                 UniformFloat($"DirectionalLights[{i}].castShadow", directionalLight.CastShadow ? 1.0f : 0.0f);
 
-                if (directionalLight.CastShadow)
+                var rt = directionalLight.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+
+                if (directionalLight.CastShadow && rt != null)
                 {
                     var shadowView = Matrix4x4.CreateLookAt(directionalLight.WorldTransform.Translation, directionalLight.WorldTransform.Translation + directionalLight.WorldTransform.ForwardVector(), directionalLight.WorldTransform.UpVector());
                     var shadowProjection = Matrix4x4.CreateOrthographic(directionalLight.ShadowConfig.Width, directionalLight.ShadowConfig.Height, directionalLight.ShadowConfig.NearPlane, directionalLight.ShadowConfig.FarPlane);
 
-                    UniformTexture($"DirectionalLightShadowMaps[{i}]", directionalLight.ShadowMapRenderTarget.DepthStencilTexture);
+                    UniformTexture($"DirectionalLightShadowMaps[{i}]", rt.DepthStencilTexture);
                     UniformMatrix4($"DirectionalLights[{i}].shadowMapMatrix", shadowView * shadowProjection);
                 }
                 else
@@ -161,7 +163,10 @@ public class LightPass : RenderPass
                 UniformFloat($"PointLights[{i}].radius", pointLight.AttenuationRadius);
                 UniformFloat($"PointLights[{i}].softRatio", pointLight.SoftRatio);
                 UniformFloat($"PointLights[{i}].castShadow", pointLight.CastShadow ? 1.0f : 0.0f);
-                if (pointLight.CastShadow)
+
+                var rt = pointLight.GetPipelineGpuResource<CubeRenderTarget>("ShadowMapRenderTarget");
+
+                if (pointLight.CastShadow && rt != null)
                 {
 
                     var position = pointLight.WorldTransform.Translation;
@@ -174,13 +179,13 @@ public class LightPass : RenderPass
                     ShadowViews[5] = Matrix4x4.CreateLookAt(position, position + new Vector3(0, 0, -1), new Vector3(0, -1, 0));
 
 
-                    var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), pointLight.ShadowMapRenderTarget.Width / (float)pointLight.ShadowMapRenderTarget.Height, pointLight.ShadowConfig.NearPlane, pointLight.ShadowConfig.FarPlane);
+                    var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), rt.Width / (float)rt.Height, pointLight.ShadowConfig.NearPlane, pointLight.ShadowConfig.FarPlane);
 
                     for (int j = 0; j < 6; j++)
                     {
                         UniformMatrix4($"PointLights[{i}].shadowMapMatrices[{j}]", ShadowViews[j] * shadowProjection);
                     }
-                    UniformTextureCubeMap($"PointLightShadowMaps[{i}]", pointLight.ShadowMapRenderTarget.DepthStencilTexture);
+                    UniformTextureCubeMap($"PointLightShadowMaps[{i}]", rt.DepthStencilTexture);
                 }
                 else
                 {
@@ -220,13 +225,15 @@ public class LightPass : RenderPass
                 UniformFloat($"SpotLights[{i}].softRatio", spotLight.SoftRatio);
                 UniformFloat($"SpotLights[{i}].castShadow", spotLight.CastShadow ? 1.0f : 0.0f);
 
-                if (spotLight.CastShadow)
+                var rt = spotLight.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+
+                if (spotLight.CastShadow && rt != null)
                 {
                     var position = spotLight.WorldTransform.Translation;
                     var shadowView = Matrix4x4.CreateLookAt(position, position + spotLight.WorldTransform.ForwardVector(), spotLight.WorldTransform.UpVector());
-                    var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(spotLight.OuterAngleDegree.DegreeToRadians(), spotLight.ShadowMapRenderTarget.Width / (float)spotLight.ShadowMapRenderTarget.Height, spotLight.ShadowConfig.NearPlane, spotLight.ShadowConfig.FarPlane);
+                    var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(spotLight.OuterAngleDegree.DegreeToRadians(), rt.Width / (float)rt.Height, spotLight.ShadowConfig.NearPlane, spotLight.ShadowConfig.FarPlane);
 
-                    UniformTexture($"SpotLightShadowMaps[{i}]", spotLight.ShadowMapRenderTarget.DepthStencilTexture);
+                    UniformTexture($"SpotLightShadowMaps[{i}]", rt.DepthStencilTexture);
                     UniformMatrix4($"SpotLights[{i}].shadowMapMatrix", shadowView * shadowProjection);
 
                 }

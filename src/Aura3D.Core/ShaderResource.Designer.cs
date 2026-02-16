@@ -170,9 +170,9 @@ namespace Aura3D.Core {
         /// <summary>
         ///   查找类似 #version 300 es
         ///precision mediump float;
-        ///layout (location = 0) out vec4 Buffer_BaseColor_Metalness;
+        ///layout (location = 0) out vec4 Buffer_BaseColor;
         ///layout (location = 1) out vec4 Buffer_Normal_Roughness;
-        ///layout (location = 2) out vec4 Buffer_Emissive_Occlusion;
+        ///layout (location = 2) out vec4 Buffer_Metalness_Emissive;
         ///
         /////{{defines}}
         ///
@@ -186,7 +186,9 @@ namespace Aura3D.Core {
         ///in vec2 vTexCoord;
         ///in vec3 vFragPosition;
         ///in mat3 vTBN;
-        ///in vec3 vNormal;  [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///in vec3 vNormal; 
+        ///
+        ///void m [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         public static string DeferredMeshFrag {
             get {
@@ -261,18 +263,11 @@ namespace Aura3D.Core {
         ///in vec2 vTexCoord;
         ///
         ///uniform sampler2D BaseColorTexture;
-        ///uniform vec4 BaseColor;
-        ///uniform int HasBaseColorTexture;
         ///uniform float alphaCutoff;
         ///
         ///void main()
         ///{
-        ///	vec4 baseColor = BaseColor;
-        ///
-        ///	if (HasBaseColorTexture == 1)
-        ///	{
-        ///		baseColor = texture(BaseColorTexture, vTexCoord);
-        ///	}
+        ///	vec4 baseColor = texture(BaseColorTexture, vTexCoord);
         ///
         ///	#if defined(BLENDMODE_MASKED) || defined(BLENDMODE_TRANSLUCENT)
         ///		if (baseColor.a &lt;= alphaCutoff)
@@ -382,7 +377,68 @@ namespace Aura3D.Core {
         }
         
         /// <summary>
-        ///   查找类似  的本地化字符串。
+        ///   查找类似 #version 300 es
+        ///precision highp float;
+        /////{{defines}}
+        ///layout (location = 0) out vec4 FragColor;
+        ///
+        ///#ifdef ENBALE_DEFERRED_SHADING
+        ///
+        ///in vec2 TexCoords;
+        ///uniform sampler2D gBufferBaseColor;
+        ///
+        ///#else
+        ///
+        ///uniform sampler2D Texture_BaseColor;
+        ///
+        ///
+        ///#endif
+        ///
+        ///uniform vec3 ambientColor;
+        ///uniform float ambientIntensity;
+        ///
+        ///
+        ///void main()
+        ///{
+        ///#ifdef ENBALE_DEFERRED_SHADING
+        ///    vec4 baseColor = texture(gBufferBaseColor, TexCoords);
+        ///    vec3 albedo = baseColor.xyz;
+        ///
+        ///#else
+        ///    vec4 baseColor = texture(Texture_Base [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        /// </summary>
+        public static string pbr_constant_ambient_frag {
+            get {
+                return ResourceManager.GetString("pbr_constant_ambient_frag", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 #version 300 es
+        ///precision highp float;
+        /////{{defines}}
+        ///
+        ///
+        ///layout (location = 0) out vec4 FragColor;
+        ///
+        ///
+        ///#ifdef ENBALE_DEFERRED_SHADING
+        ///
+        ///in vec2 TexCoords;
+        ///uniform sampler2D gBufferBaseColor;
+        ///uniform sampler2D gBufferNormalRoughness;
+        ///uniform sampler2D gBufferMetallicEmissive;
+        ///uniform sampler2D depthTexture;
+        ///
+        ///uniform mat4 invProjection;
+        ///uniform mat4 invView;
+        ///
+        ///#else
+        ///
+        ///uniform sampler2D Texture_BaseColor;
+        ///uniform sampler2D Texture_Normal;
+        ///uniform sampler2D Texture_MetallicRoughness;
+        ///uniform sa [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         public static string pbr_directionallight_lighting_pass_frag {
             get {
@@ -391,7 +447,22 @@ namespace Aura3D.Core {
         }
         
         /// <summary>
-        ///   查找类似  的本地化字符串。
+        ///   查找类似 #version 300 es
+        ///precision mediump float;
+        /////{{defines}}
+        ///
+        ///layout(location = 0) in vec3 position;
+        ///layout(location = 1) in vec2 texCoord;
+        ///
+        ///out vec2 TexCoords;
+        ///
+        ///
+        ///void main()
+        ///{
+        ///	TexCoords = texCoord;
+        ///	gl_Position = vec4(position, 1.0);
+        ///}
+        /// 的本地化字符串。
         /// </summary>
         public static string pbr_directionallight_lighting_pass_vert {
             get {

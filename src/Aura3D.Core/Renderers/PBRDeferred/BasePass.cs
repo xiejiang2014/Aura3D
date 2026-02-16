@@ -2,25 +2,21 @@
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Silk.NET.OpenGLES;
-using System.Drawing;
 using System.Numerics;
-using System.Threading.Channels;
 
 namespace Aura3D.Core.Renderers.PBRDeferred;
 
-internal class BasePass : RenderPass
+internal class BasePass : RenderPass <PBRDeferredPipeline>
 {
-    Resources.Texture defaultBaseColor;
+    Resources.Texture defaultBaseColor => RenderPipeline.DefaultBaseColor;
 
-    Resources.Texture defaultNormal;
+    Resources.Texture defaultNormal => RenderPipeline.DefaultNormal;
 
-    Resources.Texture defaultMetallicRoughness;
+    Resources.Texture defaultMetallicRoughness => RenderPipeline.DefaultMetallicRoughness;
 
-    Resources.Texture defaultEmissive;
+    Resources.Texture defaultEmissive => RenderPipeline.DefaultEmissive;
 
-    Resources.Texture defaultOcclusion;
-
-
+    Resources.Texture defaultOcclusion => RenderPipeline.DefaultOcclusion;
 
 
     public BasePass(RenderPipeline renderPipeline) : base(renderPipeline)
@@ -29,31 +25,10 @@ internal class BasePass : RenderPass
 
         FragmentShader = ShaderResource.DeferredMeshFrag;
 
-        defaultBaseColor = Resources.Texture.CreateFromColor(Color.White);
-
-
-        defaultNormal = Resources.Texture.CreateFromColor(Color.FromArgb(255, 128, 128, 255));
-
-
-        defaultMetallicRoughness = Resources.Texture.CreateFromColor(Color.FromArgb(255, 0, 127, 0));
-
-
-        defaultEmissive = Resources.Texture.CreateFromColor(Color.Black);
-
-        defaultOcclusion = Resources.Texture.CreateFromColor(Color.White);
-
         ShaderName = nameof(BasePass);
 
     }
 
-    public override void Setup()
-    {
-        defaultBaseColor.Upload(gl);
-        defaultNormal.Upload(gl);
-        defaultMetallicRoughness.Upload(gl);
-        defaultEmissive.Upload(gl);
-        defaultOcclusion.Upload(gl);
-    }
 
     public override void BeforeRender(Camera camera)
     {
@@ -105,7 +80,6 @@ internal class BasePass : RenderPass
 
             var baseColor = mesh.Material?.GetTexture("BaseColor") ?? defaultBaseColor;
             UniformTexture("Texture_BaseColor", baseColor);
-
 
             var normal = mesh.Material?.GetTexture("Normal") ?? defaultNormal;
             UniformTexture("Texture_Normal", normal);

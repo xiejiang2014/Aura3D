@@ -290,8 +290,7 @@ public static class ModelLoader
                     channel.Texture = textureMap[gltfChannel.Texture];
                     if (channel.Name == "BaseColor")
                     {
-                        var texture = (Texture)
-                        channel.Texture;
+                        var texture = (Texture)channel.Texture;
 
                         texture.SetIsGammaSpace(true);
                     }

@@ -79,7 +79,9 @@ public abstract partial class RenderPipeline
     {
         gl = GL.GetApi(getProcAddressFunctionPtr);
 
-        foreach(var renderPass in EveryCameraRenderPasses)
+        Setup();
+
+        foreach (var renderPass in EveryCameraRenderPasses)
         {
             renderPass.Setup();
         }
@@ -87,6 +89,11 @@ public abstract partial class RenderPipeline
         {
             renderPass.Setup();
         }
+    }
+
+    public virtual void Setup()
+    {
+
     }
 
     public void UpdateGpuResources()

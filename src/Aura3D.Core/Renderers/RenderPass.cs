@@ -15,6 +15,8 @@ public partial class RenderPass
     public RenderPass(RenderPipeline renderPipeline)
     {
         this.renderPipeline = renderPipeline;
+
+        ShaderName = GetType().Name;
     }
 
     protected RenderPipeline renderPipeline;
@@ -246,4 +248,13 @@ public partial class RenderPass
         Shaders.Clear();
     }
 
+}
+
+public class RenderPass<T> : RenderPass where T : RenderPipeline
+{
+    public RenderPass(RenderPipeline renderPipeline) : base(renderPipeline)
+    {
+    }
+
+    public T RenderPipeline => (T)renderPipeline;
 }

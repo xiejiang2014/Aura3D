@@ -60,12 +60,13 @@ internal class DirectionalLightingPass : RenderPass
             UniformMatrix4("invProjection", camera.Projection.Inverse());
             UniformMatrix4("invView", camera.View.Inverse());
 
-            if (dl.CastShadow == true)
+            var shadowmap = dl.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+            if (dl.CastShadow == true && shadowmap != null)
             {
                 var shadowView = Matrix4x4.CreateLookAt(dl.WorldTransform.Translation, dl.WorldTransform.Translation + dl.WorldTransform.ForwardVector(), dl.WorldTransform.UpVector());
                 var shadowProjection = Matrix4x4.CreateOrthographic(dl.ShadowConfig.Width, dl.ShadowConfig.Height, dl.ShadowConfig.NearPlane, dl.ShadowConfig.FarPlane);
 
-                UniformTexture($"dirLightshadowMap", dl.ShadowMapRenderTarget.DepthStencilTexture);
+                UniformTexture($"dirLightshadowMap", shadowmap.DepthStencilTexture);
                 UniformMatrix4($"dirLightshadowMapMatrix", shadowView * shadowProjection);
 
             }

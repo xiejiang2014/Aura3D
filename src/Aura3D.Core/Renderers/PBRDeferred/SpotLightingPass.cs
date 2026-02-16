@@ -67,13 +67,14 @@ internal class SpotLightingPass : RenderPass
             UniformFloat("radius", sl.AttenuationRadius);
             UniformFloat("softRatio", sl.SoftRatio);
 
-            if (sl.CastShadow)
+            var shadowmap = sl.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+            if (sl.CastShadow && shadowmap != null)
             {
                 var position = sl.WorldTransform.Translation;
                 var shadowView = Matrix4x4.CreateLookAt(position, position + sl.WorldTransform.ForwardVector(), sl.WorldTransform.UpVector());
-                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(sl.OuterAngleDegree.DegreeToRadians(), sl.ShadowMapRenderTarget.Width / (float)sl.ShadowMapRenderTarget.Height, sl.ShadowConfig.NearPlane, sl.ShadowConfig.FarPlane);
+                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(sl.OuterAngleDegree.DegreeToRadians(), shadowmap.Width / (float)shadowmap.Height, sl.ShadowConfig.NearPlane, sl.ShadowConfig.FarPlane);
 
-                UniformTexture($"spotLightshadowMap", sl.ShadowMapRenderTarget.DepthStencilTexture);
+                UniformTexture($"spotLightshadowMap", shadowmap.DepthStencilTexture);
                 UniformMatrix4($"spotLightshadowMapMatrix", shadowView * shadowProjection);
 
             }

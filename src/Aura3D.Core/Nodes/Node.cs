@@ -443,6 +443,48 @@ public partial class Node
 
     #endregion
 
+    public Dictionary<string, IGpuResource> _pipelineGpuResources = new Dictionary<string, IGpuResource>();
+
+    public T? GetPipelineGpuResource<T>(string name) where T : IGpuResource
+    {
+        if (_pipelineGpuResources.TryGetValue(name, out var resource))
+        {
+            if (resource is T typedResource)
+            {
+                return typedResource;
+            }
+            else
+            {
+                throw new InvalidCastException($"GPU资源 '{name}' 的类型不匹配，无法转换为 {typeof(T).Name}");
+            }
+        }
+        else
+        {
+            return default;
+        }
+    }
+
+    public void RemovePipelineGpuResource(string name)
+    {
+        _pipelineGpuResources.Remove(name);
+    }
+
+    public IQueryable<IGpuResource> QueryPipelineGpuResources()
+    {
+        return _pipelineGpuResources.Values.AsQueryable();
+    }
+
+    public void ClearPipelineGpuResources()
+    {
+        _pipelineGpuResources.Clear();
+    }
+
+
+    public void SetPipelineGpuResource(string name, IGpuResource resource)
+    {
+        _pipelineGpuResources[name] = resource;
+    }
+
 
     public virtual List<IGpuResource> GetGpuResources()
     {

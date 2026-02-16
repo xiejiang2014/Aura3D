@@ -108,12 +108,14 @@ public class CelLightPass : RenderPass
 
                 UniformFloat($"DirectionalLights[{i}].castShadow", directionalLight.CastShadow ? 1.0f : 0.0f);
 
-                if (directionalLight.CastShadow)
+                var rt = directionalLight.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+
+                if (directionalLight.CastShadow && rt != null)
                 {
                     var shadowView = Matrix4x4.CreateLookAt(directionalLight.WorldTransform.Translation, directionalLight.WorldTransform.Translation + directionalLight.WorldTransform.ForwardVector(), directionalLight.WorldTransform.UpVector());
                     var shadowProjection = Matrix4x4.CreateOrthographic(directionalLight.ShadowConfig.Width, directionalLight.ShadowConfig.Height, directionalLight.ShadowConfig.NearPlane, directionalLight.ShadowConfig.FarPlane);
 
-                    UniformTexture($"DirectionalLightShadowMaps[{i}]", directionalLight.ShadowMapRenderTarget.DepthStencilTexture);
+                    UniformTexture($"DirectionalLightShadowMaps[{i}]", rt.DepthStencilTexture);
                     UniformMatrix4($"DirectionalLights[{i}].shadowMapMatrix", shadowView * shadowProjection);
                 }
                 else

@@ -7,17 +7,17 @@ using System.Numerics;
 
 namespace Aura3D.Core.Renderers.PBRDeferred;
 
-internal class TranslucentPass : RenderPass
+internal class TranslucentPass : RenderPass<PBRDeferredPipeline>
 {
-    Resources.Texture defaultBaseColor;
+    Resources.Texture defaultBaseColor => RenderPipeline.DefaultBaseColor;
 
-    Resources.Texture defaultNormal;
+    Resources.Texture defaultNormal => RenderPipeline.DefaultNormal;
 
-    Resources.Texture defaultMetallicRoughness;
+    Resources.Texture defaultMetallicRoughness => RenderPipeline.DefaultMetallicRoughness;
 
-    Resources.Texture defaultEmissive;
+    Resources.Texture defaultEmissive => RenderPipeline.DefaultEmissive;
 
-    Resources.Texture defaultOcclusion;
+    Resources.Texture defaultOcclusion => RenderPipeline.DefaultOcclusion;
     string GbufferRenderTargetName;
     public TranslucentPass(RenderPipeline renderPipeline, string gbufferRendertarget) : base(renderPipeline)
     {
@@ -27,31 +27,7 @@ internal class TranslucentPass : RenderPass
 
         FragmentShader = ShaderResource.pbr_directionallight_lighting_pass_frag;
 
-        defaultBaseColor = Resources.Texture.CreateFromColor(Color.White);
-
-
-        defaultNormal = Resources.Texture.CreateFromColor(Color.FromArgb(255, 128, 128, 255));
-
-
-        defaultMetallicRoughness = Resources.Texture.CreateFromColor(Color.FromArgb(255, 0, 127, 0));
-
-
-
-        defaultEmissive = Resources.Texture.CreateFromColor(Color.Black);
-
-
-        defaultOcclusion = Resources.Texture.CreateFromColor(Color.White);
-
-
         ShaderName = nameof(TranslucentPass);
-    }
-    public override void Setup()
-    {
-        defaultBaseColor.Upload(gl);
-        defaultNormal.Upload(gl);
-        defaultMetallicRoughness.Upload(gl);
-        defaultEmissive.Upload(gl);
-        defaultOcclusion.Upload(gl);
     }
 
     public override void BeforeRender(Camera camera)
@@ -112,7 +88,6 @@ internal class TranslucentPass : RenderPass
 
     public void RenderTranslucentMesh(Mesh mesh, Matrix4x4 view, Matrix4x4 projection)
     {
-        bool isFirstLight = true;
 
         List<string> defines = [];
         if (mesh.IsSkinnedMesh)
@@ -123,12 +98,6 @@ internal class TranslucentPass : RenderPass
                 continue;
 
             UseShader("ENABLE_DIR_LIGHT", "BLENDMODE_TRANSLUCENT");
-
-            if (isFirstLight == true)
-            {
-                AddDefines("IS_FIRST_LIGHT");
-                isFirstLight = false;
-            }
             if (mesh.IsSkinnedMesh)
                 AddDefines("SKINNED_MESH");
             UseShader_Internal(mesh);
@@ -141,12 +110,13 @@ internal class TranslucentPass : RenderPass
             UniformColor("dirLightColor", dl.LightColor);
             UniformFloat("dirLightIntensity", dl.Intensity);
 
-            if (dl.CastShadow == true)
+            var rt = dl.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+            if (dl.CastShadow == true && rt != null)
             {
                 var shadowView = Matrix4x4.CreateLookAt(dl.WorldTransform.Translation, dl.WorldTransform.Translation + dl.WorldTransform.ForwardVector(), dl.WorldTransform.UpVector());
                 var shadowProjection = Matrix4x4.CreateOrthographic(dl.ShadowConfig.Width, dl.ShadowConfig.Height, dl.ShadowConfig.NearPlane, dl.ShadowConfig.FarPlane);
 
-                UniformTexture($"dirLightshadowMap", dl.ShadowMapRenderTarget.DepthStencilTexture);
+                UniformTexture($"dirLightshadowMap", rt.DepthStencilTexture);
                 UniformMatrix4($"dirLightshadowMapMatrix", shadowView * shadowProjection);
 
             }
@@ -161,12 +131,6 @@ internal class TranslucentPass : RenderPass
                 continue;
 
             UseShader("ENABLE_POINT_LIGHT", "BLENDMODE_TRANSLUCENT");
-
-            if (isFirstLight == true)
-            {
-                AddDefines("IS_FIRST_LIGHT");
-                isFirstLight = false;
-            }
 
             if (mesh.IsSkinnedMesh)
                 AddDefines("SKINNED_MESH");
@@ -183,7 +147,9 @@ internal class TranslucentPass : RenderPass
             UniformFloat("radius", pl.AttenuationRadius);
             UniformFloat("softRatio", pl.SoftRatio);
 
-            if (pl.CastShadow)
+            var shadowmap = pl.GetPipelineGpuResource<CubeRenderTarget>("ShadowMapRenderTarget");
+
+            if (pl.CastShadow && shadowmap != null)
             {
                 var position = pl.WorldTransform.Translation;
 
@@ -195,10 +161,10 @@ internal class TranslucentPass : RenderPass
                 ShadowViews[5] = Matrix4x4.CreateLookAt(position, position + new Vector3(0, 0, -1), new Vector3(0, -1, 0));
 
 
-                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), pl.ShadowMapRenderTarget.Width / (float)pl.ShadowMapRenderTarget.Height, pl.ShadowConfig.NearPlane, pl.ShadowConfig.FarPlane);
+                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(90f.DegreeToRadians(), shadowmap.Width / (float)shadowmap.Height, pl.ShadowConfig.NearPlane, pl.ShadowConfig.FarPlane);
 
 
-                UniformTextureCubeMap("pointLightShadowMap", pl.ShadowMapRenderTarget.DepthStencilTexture);
+                UniformTextureCubeMap("pointLightShadowMap", shadowmap.DepthStencilTexture);
                 for (int i = 0; i < 6; i++)
                 {
                     UniformMatrix4($"pointShadowMapMatrices[{i}]", ShadowViews[i] * shadowProjection);
@@ -214,16 +180,12 @@ internal class TranslucentPass : RenderPass
 
             UseShader("ENABLE_SPOT_LIGHT", "BLENDMODE_TRANSLUCENT");
 
-            if (isFirstLight == true)
-            {
-                AddDefines("IS_FIRST_LIGHT");
-                isFirstLight = false;
-            }
-
             if (mesh.IsSkinnedMesh)
                 AddDefines("SKINNED_MESH");
             UseShader_Internal(mesh);
 
+            UniformColor("ambientColor", Color.White);
+            UniformFloat("ambientIntensity", 0.3f);
             ClearTextureUnit();
             SetupUpMeshUniforms(mesh, view, projection);
 
@@ -237,13 +199,15 @@ internal class TranslucentPass : RenderPass
             UniformFloat("radius", sl.AttenuationRadius);
             UniformFloat("softRatio", sl.SoftRatio);
 
-            if (sl.CastShadow)
+            var rt = sl.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
+
+            if (sl.CastShadow && rt != null)
             {
                 var position = sl.WorldTransform.Translation;
                 var shadowView = Matrix4x4.CreateLookAt(position, position + sl.WorldTransform.ForwardVector(), sl.WorldTransform.UpVector());
-                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(sl.OuterAngleDegree.DegreeToRadians(), sl.ShadowMapRenderTarget.Width / (float)sl.ShadowMapRenderTarget.Height, sl.ShadowConfig.NearPlane, sl.ShadowConfig.FarPlane);
+                var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(sl.OuterAngleDegree.DegreeToRadians(), rt.Width / (float)rt.Height, sl.ShadowConfig.NearPlane, sl.ShadowConfig.FarPlane);
 
-                UniformTexture($"spotLightshadowMap", sl.ShadowMapRenderTarget.DepthStencilTexture);
+                UniformTexture($"spotLightshadowMap", rt.DepthStencilTexture);
                 UniformMatrix4($"spotLightshadowMapMatrix", shadowView * shadowProjection);
 
             }

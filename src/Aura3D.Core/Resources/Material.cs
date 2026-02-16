@@ -171,7 +171,7 @@ public class Material : IClone<Material>, IGpuResource
         }
         else
         {
-            Channels.Add(new Channel { Name = "Normal", Texture = texture });
+            Channels.Add(new Channel { Name = name, Texture = texture });
         }
     }
 
