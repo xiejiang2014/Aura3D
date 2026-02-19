@@ -42,6 +42,10 @@ namespace Example.ViewModels
                 new MenuViewModel {
                     Title = "Robotic Arm",
                     ViewModel = new RoboticArmViewModel()
+                },
+                new MenuViewModel {
+                    Title = "PBR RenderPipeline",
+                    ViewModel = new PbrViewModel()
                 }
             ];
             OnNavigation(this, _menus.First());

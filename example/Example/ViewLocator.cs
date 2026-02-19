@@ -17,6 +17,7 @@ public class ViewLocator : IDataTemplate
             RoboticArmViewModel roboticArmViewModel => new RoboticArmPage(),
             BlendSpaceViewModel blendSpaceViewModel => new BlendSpacePage(),
             AnimationGraphViewModel animationGraphViewModel => new AnimationGraphPage(),
+            PbrViewModel pbrViewModel => new PbrPipelinePage(),
             _ => new TextBlock() { Text = "NotFound" }
         };
     }
