@@ -276,7 +276,7 @@ void main() {
 
     vec4 normalRough = texture(gBufferNormalRoughness, TexCoords);
     vec3 N = normalize(normalRough.rgb * 2.0 - 1.0);
-    float roughness = clamp(normalRough.a, 0.01, 0.99);
+    float roughness = clamp(normalRough.a, 0.05, 1.0);
 
     vec3 fragPosWorld = reconstructWorldPosFromDepth(TexCoords);
 
