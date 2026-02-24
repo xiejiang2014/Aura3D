@@ -23,12 +23,25 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
 
     public Resources.Texture DefaultOcclusion { get; private set; }
 
+    private RenderTarget _brdfLutPass;
 
     public PBRDeferredPipeline(Scene scene) : base(scene)
     {
+        _brdfLutPass = new RenderTarget();
+
+        _brdfLutPass.AddRenderTexture("BrdfLut", TextureFormat.Rgb32f)
+            .SetDepthTexture(TextureFormat.DepthComponent16)
+            .SetSize(512, 512);
+
+
         var shadowPass = new ShadowMapPass(this);
+
         shadowPass.UpdateLightNumLimit(10, 10, 10);
+
         RegisterRenderPass(shadowPass, RenderPassGroup.Once);
+
+        RegisterRenderPass(new BrdfLutPass(this, _brdfLutPass), RenderPassGroup.Once);
+
         RegisterRenderPass(new BasePass(this).SetOutPutRenderTarget("GBuffer"), RenderPassGroup.EveryCamera);
 
         RegisterRenderPass(new ConstantAmbientPass(this, "GBuffer").SetOutPutRenderTarget("BaseRenderTarget"), RenderPassGroup.EveryCamera);
@@ -72,7 +85,6 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
         RegisterRenderTarget("GammaOutput")
             .AddTexture("Color", TextureFormat.Rgb16f)
             .SetDepthTexture(TextureFormat.DepthComponent16);
-
 
         DefaultBaseColor = Resources.Texture.CreateFromColor(Color.White);
 
