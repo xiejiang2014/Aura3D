@@ -10,6 +10,15 @@ public class RenderTarget : IGpuResource, IRenderTarget
         depthStencilTexture = new RenderTexture(this);
     }
 
+    public int MipmapLevel { get; private set; } = 1;
+
+    public RenderTarget SetMipMapLevel(int mipmapLevel)
+    {
+        MipmapLevel = mipmapLevel;
+
+        return this;
+    }
+
     protected List<RenderTexture> renderTextures = new List<RenderTexture>();
 
     protected Dictionary<string, RenderTexture> renderTexturesMap = new Dictionary<string, RenderTexture>();
@@ -69,8 +78,18 @@ public class RenderTarget : IGpuResource, IRenderTarget
         foreach (var texture in renderTextures)
         {
             texture.TextureId = gl.GenTexture();
+
             gl.BindTexture(GLEnum.Texture2D, texture.TextureId);
-            gl.TexImage2D(GLEnum.Texture2D, 0, (int)texture.InternalFormat.ToGlInternalFormat(), Width, Height, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
+
+            for(int mip = 0; mip < MipmapLevel; mip++)
+            {
+                var mipWidth = Width / (1 << mip);
+
+                var mipHeight = Height / (1 << mip);
+                
+                gl.TexImage2D(GLEnum.Texture2D, mip, (int)texture.InternalFormat.ToGlInternalFormat(), (uint)mipWidth, (uint)mipHeight, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
+
+            }
             gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Linear);
             gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Linear);
             gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)GLEnum.ClampToEdge);
@@ -82,7 +101,17 @@ public class RenderTarget : IGpuResource, IRenderTarget
 
         depthStencilTexture.TextureId = gl.GenTexture();
         gl.BindTexture(GLEnum.Texture2D, DepthStencilTexture.TextureId);
-        gl.TexImage2D(GLEnum.Texture2D, 0, (int)depthStencilTexture.InternalFormat.ToGlInternalFormat(), Width, Height, 0, depthStencilTexture.InternalFormat.ToGlPixelFormat(), depthStencilTexture.InternalFormat.ToGlPixelType(), (void*)0);
+
+        for (int mip = 0; mip < MipmapLevel; mip++)
+        {
+            var mipWidth = Width / (1 << mip);
+
+            var mipHeight = Height / (1 << mip); 
+            
+            gl.TexImage2D(GLEnum.Texture2D, mip, (int)depthStencilTexture.InternalFormat.ToGlInternalFormat(), (uint)mipWidth, (uint)mipHeight, 0, depthStencilTexture.InternalFormat.ToGlPixelFormat(), depthStencilTexture.InternalFormat.ToGlPixelType(), (void*)0);
+
+        }
+
         gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Nearest);
         gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Nearest);
 
