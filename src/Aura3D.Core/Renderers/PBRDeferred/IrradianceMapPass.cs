@@ -81,13 +81,13 @@ void main()
         var irradianceMap = camera.GetPipelineGpuResource<CubeRenderTarget>("IrradianceMap");
 
         if (irradianceMap != null)
-            return;
+            ;// return;
         else
         {
             irradianceMap = new CubeRenderTarget()
             .SetSize(_irradianceMapSize, _irradianceMapSize)
             .AddRenderTexture("Irradiance", TextureFormat.Rgb16f)
-            .SetDepthTexture(TextureFormat.Depth32fStencil8);
+            .SetDepthTexture(TextureFormat.DepthComponent16);
 
             irradianceMap.Upload(gl);
         }
@@ -116,6 +116,8 @@ void main()
         UseShader();
         for (int i = 0; i < 6; i ++)
         {
+            gl.BindFramebuffer(GLEnum.Framebuffer, irradianceMap.FrameBufferId);
+
             gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.TextureCubeMapPositiveX + i, texture.TextureId, 0);
             
             gl.Viewport(0, 0, (int)_irradianceMapSize, (int)_irradianceMapSize);

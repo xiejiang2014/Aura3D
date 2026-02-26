@@ -2,6 +2,7 @@
 using Silk.NET.OpenGLES;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -86,6 +87,7 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
     public override void BeforeRender(Camera camera)
     {
         base.BeforeRender(camera);
+        gl.Disable(EnableCap.DepthTest);
     }
 
     public override void Render(Camera camera)
@@ -104,6 +106,8 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
             perfilteredEnvMap.SetSize(PREFILTER_WIDTH, PREFILTER_WIDTH);
 
             perfilteredEnvMap.Upload(gl);
+
+            perfilteredEnvMap.SetDepthTexture(TextureFormat.DepthComponent16);
 
             camera.SetPipelineGpuResource("PrefilteredEnvironmentMap", perfilteredEnvMap);
 
@@ -124,6 +128,7 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
             Matrix4x4.CreateLookAt(Vector3.Zero, -Vector3.UnitZ, -Vector3.UnitY)
         ];
 
+        gl.BindFramebuffer(GLEnum.Framebuffer, perfilteredEnvMap.FrameBufferId);
 
         UniformInt("environmentMap", 0);
 
@@ -132,6 +137,8 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
         gl.BindTexture(TextureTarget.TextureCubeMap, camera.SkyboxTexture!.TextureId);
 
         UniformMatrix4("projection", projection);
+
+        gl.ClearColor(Color.White);
 
         for (int mip = 0; mip < perfilteredEnvMap.MipmapLevel; mip++)
         {
@@ -146,9 +153,11 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
 
             for(var face = 0; face < 6; face++)
             {
-                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.TextureCubeMapPositiveX + face, perfilteredEnvMap.FrameBufferId, mip);
+                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.TextureCubeMapPositiveX + face, perfilteredEnvMap.GetTexture(0).TextureId, mip);
 
-                gl.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
+                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.TextureCubeMapPositiveX + face, perfilteredEnvMap.DepthStencilTexture.TextureId, mip);
+                
+                gl.Clear(ClearBufferMask.ColorBufferBit);
 
                 UniformMatrix4("view", views[face]);
 
@@ -163,6 +172,7 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
     public override void AfterRender(Camera camera)
     {
         base.AfterRender(camera);
+        gl.Enable(EnableCap.DepthTest);
     }
 
 }

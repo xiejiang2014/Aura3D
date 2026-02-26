@@ -136,11 +136,12 @@ public class CubeRenderTarget : IGpuResource, IRenderTarget
                 for (int i = 0; i < 6; i++)
                 {
                     gl.TexImage2D((GLEnum)((uint)GLEnum.TextureCubeMapPositiveX + i), mip, (int)texture.InternalFormat.ToGlInternalFormat(), (uint)mipWidth, (uint)mipHeight, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
+
                 }
             }
 
-            gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.TextureCubeMapNegativeX, texture.TextureId, 0);
 
+            gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.TextureCubeMapNegativeX, texture.TextureId, 0);
             ColorAttachmentSet[index] = GLEnum.ColorAttachment0 + index;
             index++;
         }

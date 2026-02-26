@@ -81,7 +81,12 @@ public class RenderTarget : IGpuResource, IRenderTarget
 
             gl.BindTexture(GLEnum.Texture2D, texture.TextureId);
 
-            for(int mip = 0; mip < MipmapLevel; mip++)
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Linear);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Linear);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)GLEnum.ClampToEdge);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)GLEnum.ClampToEdge);
+
+            for (int mip = 0; mip < MipmapLevel; mip++)
             {
                 var mipWidth = Width / (1 << mip);
 
@@ -90,10 +95,6 @@ public class RenderTarget : IGpuResource, IRenderTarget
                 gl.TexImage2D(GLEnum.Texture2D, mip, (int)texture.InternalFormat.ToGlInternalFormat(), (uint)mipWidth, (uint)mipHeight, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
 
             }
-            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Linear);
-            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Linear);
-            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)GLEnum.ClampToEdge);
-            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)GLEnum.ClampToEdge);
             gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.Texture2D, texture.TextureId, 0);
             ColorAttachmentSet[index] = GLEnum.ColorAttachment0 + index;
             index++;
@@ -101,6 +102,9 @@ public class RenderTarget : IGpuResource, IRenderTarget
 
         depthStencilTexture.TextureId = gl.GenTexture();
         gl.BindTexture(GLEnum.Texture2D, DepthStencilTexture.TextureId);
+
+        gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Nearest);
+        gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Nearest);
 
         for (int mip = 0; mip < MipmapLevel; mip++)
         {
@@ -111,10 +115,6 @@ public class RenderTarget : IGpuResource, IRenderTarget
             gl.TexImage2D(GLEnum.Texture2D, mip, (int)depthStencilTexture.InternalFormat.ToGlInternalFormat(), (uint)mipWidth, (uint)mipHeight, 0, depthStencilTexture.InternalFormat.ToGlPixelFormat(), depthStencilTexture.InternalFormat.ToGlPixelType(), (void*)0);
 
         }
-
-        gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Nearest);
-        gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Nearest);
-
 
         gl.FramebufferTexture2D(GLEnum.Framebuffer, depthStencilTexture.InternalFormat.ToGlAttachment(), GLEnum.Texture2D, DepthStencilTexture.TextureId, 0);
         gl.DrawBuffers(ColorAttachmentSet);
