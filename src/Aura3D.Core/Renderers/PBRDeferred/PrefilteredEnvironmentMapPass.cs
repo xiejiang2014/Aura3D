@@ -94,12 +94,12 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
     {
         var perfilteredEnvMap = camera.GetPipelineGpuResource<CubeRenderTarget>("PrefilteredEnvironmentMap");
         if (perfilteredEnvMap != null)
-            ;//return;
+            return;
         else
         {
             perfilteredEnvMap = new CubeRenderTarget();
 
-            perfilteredEnvMap.AddRenderTexture("perfilteredEnv", TextureFormat.Rgb16f);
+            perfilteredEnvMap.AddRenderTexture("perfilteredEnv", TextureFormat.Rgb8);
 
             perfilteredEnvMap.SetMipMapLevel(MAX_MIP_LEVELS);
 
@@ -128,7 +128,10 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
             Matrix4x4.CreateLookAt(Vector3.Zero, -Vector3.UnitZ, -Vector3.UnitY)
         ];
 
-        gl.BindFramebuffer(GLEnum.Framebuffer, perfilteredEnvMap.FrameBufferId);
+
+        var perfilteredEnvMapTexture = perfilteredEnvMap.GetTexture(0)!;
+
+
 
         UniformInt("environmentMap", 0);
 
@@ -138,26 +141,23 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
 
         UniformMatrix4("projection", projection);
 
-        gl.ClearColor(Color.White);
-
         for (int mip = 0; mip < perfilteredEnvMap.MipmapLevel; mip++)
         {
             var roughness = mip / (float)(MAX_MIP_LEVELS - 1);
 
-            UniformFloat("roughness", roughness);
-
             var mipWidth = PREFILTER_WIDTH / (1 << mip);
+
             var mipHeight = PREFILTER_WIDTH / (1 << mip);
 
             gl.Viewport(0, 0, (uint)mipWidth, (uint)mipHeight);
 
-            for(var face = 0; face < 6; face++)
-            {
-                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.TextureCubeMapPositiveX + face, perfilteredEnvMap.GetTexture(0).TextureId, mip);
+            UniformFloat("roughness", roughness);
 
-                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.TextureCubeMapPositiveX + face, perfilteredEnvMap.DepthStencilTexture.TextureId, mip);
-                
-                gl.Clear(ClearBufferMask.ColorBufferBit);
+            for (var face = 0; face < 6; face++)
+            {
+                gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.TextureCubeMapPositiveX + face, perfilteredEnvMapTexture.TextureId, mip);
+
+                // gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.TextureCubeMapPositiveX + face, perfilteredEnvMap.DepthStencilTexture.TextureId, mip);
 
                 UniformMatrix4("view", views[face]);
 

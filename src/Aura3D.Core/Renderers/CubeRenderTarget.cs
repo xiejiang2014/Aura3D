@@ -127,21 +127,15 @@ public class CubeRenderTarget : IGpuResource, IRenderTarget
             gl.TexParameter(GLEnum.TextureCubeMap, GLEnum.TextureWrapT, (int)GLEnum.ClampToEdge);
             gl.TexParameter(GLEnum.TextureCubeMap, GLEnum.TextureWrapR, (int)GLEnum.ClampToEdge);
 
-            for (int mip = 0; mip < MipmapLevel; mip++)
+
+            for (int i = 0; i < 6; i++)
             {
-                var mipWidth = Width / (1 << mip);
+                gl.TexImage2D((GLEnum)((uint)GLEnum.TextureCubeMapPositiveX + i), 0, (int)texture.InternalFormat.ToGlInternalFormat(), (uint)Width, (uint)Height, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
 
-                var mipHeight = Height / (1 << mip);
-
-                for (int i = 0; i < 6; i++)
-                {
-                    gl.TexImage2D((GLEnum)((uint)GLEnum.TextureCubeMapPositiveX + i), mip, (int)texture.InternalFormat.ToGlInternalFormat(), (uint)mipWidth, (uint)mipHeight, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
-
-                }
             }
+            gl.GenerateMipmap(GLEnum.TextureCubeMap);
 
-
-            gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.TextureCubeMapNegativeX, texture.TextureId, 0);
+            gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.TextureCubeMapPositiveX, texture.TextureId, 0);
             ColorAttachmentSet[index] = GLEnum.ColorAttachment0 + index;
             index++;
         }
@@ -154,20 +148,20 @@ public class CubeRenderTarget : IGpuResource, IRenderTarget
         gl.TexParameter(GLEnum.TextureCubeMap, GLEnum.TextureWrapT, (int)GLEnum.ClampToEdge);
         gl.TexParameter(GLEnum.TextureCubeMap, GLEnum.TextureWrapR, (int)GLEnum.ClampToEdge);
 
-        for (int mip = 0; mip < MipmapLevel; mip++)
+        for (int i = 0; i < 6; i++)
         {
-            var mipWidth = Width / (1 << mip);
+            gl.TexImage2D(GLEnum.TextureCubeMapPositiveX + i, 0, (int)depthStencilTexture.InternalFormat.ToGlInternalFormat(), (uint)Width, (uint)Height, 0, depthStencilTexture.InternalFormat.ToGlPixelFormat(), depthStencilTexture.InternalFormat.ToGlPixelType(), (void*)0);
 
-            var mipHeight = Height / (1 << mip);
-            for (int i = 0; i < 6; i++)
-            {
-                gl.TexImage2D(GLEnum.TextureCubeMapPositiveX + i, mip, (int)depthStencilTexture.InternalFormat.ToGlInternalFormat(), (uint)mipWidth, (uint)mipHeight, 0, depthStencilTexture.InternalFormat.ToGlPixelFormat(), depthStencilTexture.InternalFormat.ToGlPixelType(), (void*)0);
-
-            }
         }
-        gl.FramebufferTexture2D(GLEnum.Framebuffer, depthStencilTexture.InternalFormat.ToGlAttachment(), GLEnum.TextureCubeMapNegativeX, depthStencilTexture.TextureId, 0);
+        gl.GenerateMipmap(GLEnum.TextureCubeMap);
+        gl.FramebufferTexture2D(GLEnum.Framebuffer, depthStencilTexture.InternalFormat.ToGlAttachment(), GLEnum.TextureCubeMapPositiveX, depthStencilTexture.TextureId, 0);
         gl.DrawBuffers(ColorAttachmentSet);
         state = gl.CheckFramebufferStatus(GLEnum.Framebuffer);
+
+        if (state != GLEnum.FramebufferComplete)
+        {
+            throw new Exception("create framebuffer error: " + state);
+        }
     }
 
 

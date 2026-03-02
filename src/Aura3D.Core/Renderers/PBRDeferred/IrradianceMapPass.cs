@@ -81,7 +81,7 @@ void main()
         var irradianceMap = camera.GetPipelineGpuResource<CubeRenderTarget>("IrradianceMap");
 
         if (irradianceMap != null)
-            ;// return;
+            return;
         else
         {
             irradianceMap = new CubeRenderTarget()
