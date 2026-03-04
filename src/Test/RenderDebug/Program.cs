@@ -61,7 +61,7 @@ window.Load += () =>
     camera.SkyboxTexture = cubeTexture;
 
 
-    var (model, animations) = ModelLoader.LoadGlbModelAndAnimations($"../../../../../../example/Example/Assets/Models/lightbulb_01_1k.glb");
+    var (model, animations) = ModelLoader.LoadGlbModelAndAnimations($"../../../../../../example/Example/Assets/Models/wooden_stool_02_1k.glb");
 
     AddNode(model);
 

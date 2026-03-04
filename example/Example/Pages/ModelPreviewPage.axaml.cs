@@ -231,6 +231,36 @@ public partial class ModelPreviewPage : UserControl
 
         dl.LightColor = Color.White;
 
+        var camera = view.MainCamera;
+
+        var list = new List<Stream>();
+        List<string> name =
+        [
+            "px.png",
+        "nx.png",
+        "py.png",
+        "ny.png",
+        "pz.png",
+        "nz.png",
+    ];
+        foreach (var filename in name)
+        {
+            var stream = AssetLoader.Open(new Uri($"avares://Example/Assets/Textures/skybox/{filename}"));
+            
+            list.Add(stream);
+        }
+
+        var cubeTexture = TextureLoader.LoadCubeTexture(list);
+
+        foreach (var stream in list)
+        {
+            stream.Dispose();
+        }
+
+        camera.ClearType = ClearType.Skybox;
+
+        camera.SkyboxTexture = cubeTexture;
+
         view.AddNode(dl);
     }
 

@@ -74,7 +74,6 @@ public class RenderTarget : IGpuResource, IRenderTarget
         GLEnum state = default;
 
         Span<GLEnum> ColorAttachmentSet = stackalloc GLEnum[renderTextures.Count];
-
         foreach (var texture in renderTextures)
         {
             texture.TextureId = gl.GenTexture();
@@ -87,9 +86,11 @@ public class RenderTarget : IGpuResource, IRenderTarget
             gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)GLEnum.ClampToEdge);
 
             gl.TexImage2D(GLEnum.Texture2D, 0, (int)texture.InternalFormat.ToGlInternalFormat(), (uint)Width, (uint)Height, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
-
-            gl.GenerateMipmap(GLEnum.TextureCubeMap);
+           
+            if (MipmapLevel > 1)
+                gl.GenerateMipmap(GLEnum.TextureCubeMap);
             gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.Texture2D, texture.TextureId, 0);
+         
             ColorAttachmentSet[index] = GLEnum.ColorAttachment0 + index;
             index++;
         }
@@ -101,9 +102,11 @@ public class RenderTarget : IGpuResource, IRenderTarget
         gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Nearest);
 
         gl.TexImage2D(GLEnum.Texture2D, 0, (int)depthStencilTexture.InternalFormat.ToGlInternalFormat(), (uint)Width, (uint)Height, 0, depthStencilTexture.InternalFormat.ToGlPixelFormat(), depthStencilTexture.InternalFormat.ToGlPixelType(), (void*)0);
-        gl.GenerateMipmap(GLEnum.TextureCubeMap);
-
+     
+        if (MipmapLevel > 1)
+            gl.GenerateMipmap(GLEnum.TextureCubeMap);
         gl.FramebufferTexture2D(GLEnum.Framebuffer, depthStencilTexture.InternalFormat.ToGlAttachment(), GLEnum.Texture2D, DepthStencilTexture.TextureId, 0);
+
         gl.DrawBuffers(ColorAttachmentSet);
         state = gl.CheckFramebufferStatus(GLEnum.Framebuffer);
 

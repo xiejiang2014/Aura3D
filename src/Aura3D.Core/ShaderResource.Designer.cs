@@ -391,6 +391,7 @@ namespace Aura3D.Core {
         ///
         ///uniform sampler2D Texture_BaseColor;
         ///
+        ///in vec2 vTexCoord;
         ///
         ///#endif
         ///
@@ -405,7 +406,7 @@ namespace Aura3D.Core {
         ///    vec3 albedo = baseColor.xyz;
         ///
         ///#else
-        ///    vec4 baseColor = texture(Texture_Base [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///    vec4 baseColor =  [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         public static string pbr_constant_ambient_frag {
             get {
@@ -467,6 +468,15 @@ namespace Aura3D.Core {
         public static string pbr_directionallight_lighting_pass_vert {
             get {
                 return ResourceManager.GetString("pbr_directionallight_lighting_pass_vert", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似  的本地化字符串。
+        /// </summary>
+        public static string pbr_ibl_ambient_frag {
+            get {
+                return ResourceManager.GetString("pbr_ibl_ambient_frag", resourceCulture);
             }
         }
         

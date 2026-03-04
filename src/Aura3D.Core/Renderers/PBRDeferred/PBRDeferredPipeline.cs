@@ -23,14 +23,14 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
 
     public Resources.Texture DefaultOcclusion { get; private set; }
 
-    private RenderTarget _brdfLutPass;
+    private RenderTarget _brdfLutRenderTarget;
 
     public PBRDeferredPipeline(Scene scene) : base(scene)
     {
-        _brdfLutPass = new RenderTarget();
+        _brdfLutRenderTarget = new RenderTarget();
 
-        _brdfLutPass.AddRenderTexture("BrdfLut", TextureFormat.Rgb32f)
-            .SetDepthTexture(TextureFormat.DepthComponent16)
+        _brdfLutRenderTarget.AddRenderTexture("BrdfLut", TextureFormat.Rgb16f)
+            .SetDepthTexture(TextureFormat.Depth24Stencil8)
             .SetSize(512, 512);
 
 
@@ -40,7 +40,7 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
 
         RegisterRenderPass(shadowPass, RenderPassGroup.Once);
 
-        RegisterRenderPass(new BrdfLutPass(this, _brdfLutPass), RenderPassGroup.Once);
+        RegisterRenderPass(new BrdfLutPass(this, _brdfLutRenderTarget), RenderPassGroup.Once);
 
         RegisterRenderPass(new IrradianceMapPass(this), RenderPassGroup.EveryCamera);
 
@@ -50,7 +50,8 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
 
         RegisterRenderPass(new BasePass(this).SetOutPutRenderTarget("GBuffer"), RenderPassGroup.EveryCamera);
 
-        RegisterRenderPass(new ConstantAmbientPass(this, "GBuffer").SetOutPutRenderTarget("BaseRenderTarget"), RenderPassGroup.EveryCamera);
+        // RegisterRenderPass(new ConstantAmbientPass(this, "GBuffer").SetOutPutRenderTarget("BaseRenderTarget"), RenderPassGroup.EveryCamera);
+        RegisterRenderPass(new IBLAmbientPass(this, "GBuffer", _brdfLutRenderTarget).SetOutPutRenderTarget("BaseRenderTarget"), RenderPassGroup.EveryCamera);
 
         RegisterRenderPass(new DirectionalLightingPass(this, "GBuffer").SetOutPutRenderTarget("BaseRenderTarget"), RenderPassGroup.EveryCamera);
 

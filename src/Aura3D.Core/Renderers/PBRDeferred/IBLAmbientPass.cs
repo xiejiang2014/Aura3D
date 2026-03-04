@@ -1,13 +1,106 @@
-﻿using System;
+﻿using Aura3D.Core.Math;
+using Aura3D.Core.Nodes;
+using Silk.NET.OpenGLES;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Aura3D.Core.Renderers.PBRDeferred;
 
-internal class IBLAmbientPass(RenderPipeline renderPipeline) : RenderPass(renderPipeline)
+internal class IBLAmbientPass : RenderPass
 {
-    
+    string gbufferRenderTargetName;
+    RenderTarget _brdfLutRenderTarget;
+    public IBLAmbientPass(RenderPipeline renderPipeline, string gbufferRenderTarget, RenderTarget brdfLutRenderTarget) : base(renderPipeline)
+    {
+        VertexShader = @"#version 300 es
+precision highp float;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec2 a_texCoord;
+
+out vec2 v_texCoord;
+out vec4 v_clipPos;
+
+void main() {
+    gl_Position = vec4(a_position, 1.0);
+    v_texCoord = a_texCoord;
+    v_clipPos = gl_Position;
+}";
+
+        FragmentShader = ShaderResource.pbr_ibl_ambient_frag;
+        gbufferRenderTargetName = gbufferRenderTarget;
+        _brdfLutRenderTarget = brdfLutRenderTarget;
+    }
+
+
+    public override void BeforeRender(Camera camera)
+    {
+        gl.Disable(EnableCap.DepthTest);
+
+        gl.Enable(EnableCap.Blend);
+
+        gl.BlendFunc(BlendingFactor.One, BlendingFactor.One);
+
+        gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
+
+    }
+
+    public override void Render(Camera camera)
+    {
+        if (camera.ClearType != ClearType.Skybox)
+            return;
+
+        BindOutPutRenderTarget(camera);
+        gl.ClearColor(0, 0, 0, 0);
+        gl.Clear(ClearBufferMask.ColorBufferBit);
+
+        var size = new Size((int)camera.RenderTarget.Width, (int)camera.RenderTarget.Height);
+        var rt = GetRenderTarget(gbufferRenderTargetName, size);
+
+        var gBufferBaseColor = rt.GetTexture("BaseColor");
+        var gBufferNormalRoughness = rt.GetTexture("NormalRoughness");
+        var gBufferMetallicEmissive = rt.GetTexture("MetallicEmissive");
+        var depthTexture = rt.DepthStencilTexture;
+
+        var u_brdfLUT = _brdfLutRenderTarget.GetTexture(0)!;
+
+
+        var irradianceMap = camera.GetPipelineGpuResource<CubeRenderTarget>("IrradianceMap");
+        var u_irradianceMap = irradianceMap.GetTexture(0);
+
+        var perfilteredEnvMap = camera.GetPipelineGpuResource<CubeRenderTarget>("PrefilteredEnvironmentMap");
+        var u_prefilterMap = perfilteredEnvMap.GetTexture(0);
+
+
+        UseShader_Internal(null);
+        ClearTextureUnit();
+
+        UniformTexture(nameof(gBufferBaseColor), gBufferBaseColor);
+        UniformTexture(nameof(gBufferNormalRoughness), gBufferNormalRoughness);
+        UniformTexture(nameof(gBufferMetallicEmissive), gBufferMetallicEmissive);
+        UniformTexture(nameof(depthTexture), depthTexture);
+        UniformTexture(nameof(u_brdfLUT), u_brdfLUT);
+        UniformTextureCubeMap(nameof(u_irradianceMap), u_irradianceMap);
+        UniformTextureCubeMap(nameof(u_prefilterMap), u_prefilterMap);
+        var u_viewMatrix = camera.View;
+        var u_projMatrix = camera.Projection;
+        var u_invViewProjMatrix = (u_viewMatrix * u_projMatrix).Inverse();
+        UniformMatrix4(nameof(u_viewMatrix), u_viewMatrix);
+        UniformMatrix4(nameof(u_projMatrix), u_projMatrix);
+        UniformMatrix4(nameof(u_invViewProjMatrix), u_invViewProjMatrix);
+        UniformVector3("u_cameraPos", camera.WorldTransform.Translation);
+      
+        RenderQuad();
+    }
+
+    public override void AfterRender(Camera camera)
+    {
+
+    }
 
 }
+       
