@@ -98,6 +98,18 @@ public abstract partial class RenderPipeline
 
     public void UpdateGpuResources()
     {
+        foreach(var (isAdd, gpuResource) in modifyGpuResourceList)
+        {
+            if (isAdd)
+                GpuResources.Add(gpuResource);
+            else
+            {
+                GpuResources.Remove(gpuResource);
+                gpuResource.Destroy(gl!);
+                gpuResource.NeedsUpload = true;
+            }
+        }
+        modifyGpuResourceList.Clear();
         foreach (var gpuResource in GpuResources)
         {
             if (gpuResource.NeedsUpload == true)
@@ -111,10 +123,16 @@ public abstract partial class RenderPipeline
 
     public void AddGpuResource(IGpuResource gpuResource)
     {
-        if (GpuResources.Contains(gpuResource))
-            return;
-        GpuResources.Add(gpuResource);
+        modifyGpuResourceList.Add((true, gpuResource));
     }
+
+    public void RemoveGpuResource(IGpuResource gpuResource)
+    {
+        modifyGpuResourceList.Add((false, gpuResource));
+    }
+
+
+    List<(bool isAdd, IGpuResource gpuResource)> modifyGpuResourceList = [];
 
     public void AddNode(Node node)
     {
@@ -163,6 +181,11 @@ public abstract partial class RenderPipeline
                 DirectionalLights.Remove(directionalLight);
                 break;
         }
+        foreach(var gpuResource in node.GetGpuResources())
+        {
+
+        }
+        node.ClearPipelineGpuResources();
     }
 
     private void UpdateLightLimit()
