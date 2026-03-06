@@ -24,7 +24,7 @@ public abstract class Aura3DViewBase : global::Avalonia.OpenGL.Controls.OpenGlCo
         Stopwatch = new Stopwatch();
     }
 
-    public Func<Scene, RenderPipeline> CreateRenderPipeline = scene => new BlinnPhongPipeline(scene);
+    public Func<Scene, RenderPipeline> CreateRenderPipeline = scene => new CelShadingPipeline(scene);
 
     protected override void OnOpenGlInit(GlInterface gl)
     {
