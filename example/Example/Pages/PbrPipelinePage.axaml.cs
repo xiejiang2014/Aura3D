@@ -110,7 +110,7 @@ public partial class PbrPipelinePage : UserControl
     {
 
         InitEvent();
-
+        var scene = e.Scene;
         try
         {
 
@@ -132,35 +132,36 @@ public partial class PbrPipelinePage : UserControl
 
                     mesh.Material.SetTexture("MetallicRoughness", Texture.CreateFromColor(Color.FromArgb((255 / 7) * i, (255 / 7) * j, 0)));
 
-                    var v = e.Scene.MainCamera.Position + e.Scene.MainCamera.Forward * 2;
+                    var v = scene.MainCamera.Position + scene.MainCamera.Forward * 2;
 
                     mesh.Position = new Vector3(i * 3, j * 3, v.Z);
 
 
-                    e.Scene.AddNode(mesh);
+                    scene.AddNode(mesh);
 
                 }
 
             }
 
-            e.Scene.MainCamera.Position = new Vector3(-1.1829785F, 8.988152F, 9.307376F);
-            e.Scene.MainCamera.RotationDegrees = new Vector3(1.1555548F, -31.027235F, 0);
+            scene.MainCamera.Position = new Vector3(-1.1829785F, 8.988152F, 9.307376F);
+            scene.MainCamera.RotationDegrees = new Vector3(1.1555548F, -31.027235F, 0);
 
+            
             var dl = new DirectionalLight();
 
             dl.RotationDegrees = new Vector3(-30, 0, 0);
 
             dl.LightColor = Color.White;
 
-            e.Scene.AddNode(dl);
-
+            scene.AddNode(dl);
+            
             using (var stream = AssetLoader.Open(new Uri($"avares://Example/Assets/Textures/buikslotermeerplein_1k.hdr")))
             {
                 var hdriTexture = TextureLoader.LoadHdrTexture(stream);
 
                 var cubemap = HDRIToCubeTextureConverter.ConvertFromTexture(hdriTexture, 1024);
 
-                e.Scene.Background = cubemap;
+                scene.Background = cubemap;
             }
 
 

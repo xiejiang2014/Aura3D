@@ -61,9 +61,7 @@ public class MainActivity : SilkActivity
                 stream.Dispose();
             }
 
-            camera.ClearType = ClearType.Skybox;
-
-            camera.SkyboxTexture = cubeTexture;
+            scene.Background = cubeTexture;
 
             using (var stream = Assets.Open($"Example/Assets/Models/lion_head_1k.glb"))
             {

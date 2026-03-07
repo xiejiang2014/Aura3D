@@ -44,6 +44,6 @@
 			</StackPanel>
 
         </StackPanel>
-    <a:Aura3DView x:TypeArguments="acr:PBRDeferredPipeline"  x:Name="aura3d" SceneInitialized="Aura3DView_SceneInitialized" SceneUpdated="Aura3DView_SceneUpdated"></a:Aura3DView>
+    <a:Aura3DView  x:TypeArguments="acr:PBRDeferredPipeline"  x:Name="aura3d" SceneInitialized="Aura3DView_SceneInitialized" SceneUpdated="Aura3DView_SceneUpdated"></a:Aura3DView>
   </DockPanel>
 </UserControl>
