@@ -217,13 +217,8 @@ public partial class ModelPreviewPage : UserControl
         }
     }
 
-    private void Aura3DView_SceneInitialized(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void Aura3DView_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
-        var view = sender as Aura3DView;
-        if (view == null)
-        {
-            return;
-        }
 
         var dl = new DirectionalLight();
 
@@ -231,7 +226,7 @@ public partial class ModelPreviewPage : UserControl
 
         dl.LightColor = Color.White;
 
-        var camera = view.MainCamera;
+        var camera = e.Scene.MainCamera;
 
         var list = new List<Stream>();
         List<string> name =
@@ -257,9 +252,9 @@ public partial class ModelPreviewPage : UserControl
             stream.Dispose();
         }
 
-        view.Scene.Background = cubeTexture;
+        e.Scene.Background = cubeTexture;
 
-        view.AddNode(dl);
+        e.Scene.AddNode(dl);
     }
 
     private void Aura3DView_SceneUpdated(object? sender, Aura3D.Avalonia.UpdateRoutedEventArgs e)

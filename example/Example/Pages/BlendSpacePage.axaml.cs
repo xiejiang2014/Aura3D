@@ -30,11 +30,8 @@ public partial class BlendSpacePage : UserControl
 
     Model? model = null;
 
-    private void aura3Dview_SceneInitialized(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void aura3Dview_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
-        var aura3DView = sender as Aura3DView;
-        if (aura3DView == null)
-            return;
         var dl = new DirectionalLight();
 
         dl.RotationDegrees = new Vector3(-30, -60, 0);
@@ -54,7 +51,7 @@ public partial class BlendSpacePage : UserControl
         
 
 
-        aura3DView.AddNode(dl);
+        e.Scene.AddNode(dl);
 
         if (model == null)
         {
@@ -127,7 +124,7 @@ public partial class BlendSpacePage : UserControl
 
         aura3Dview.MainCamera.Position += aura3Dview.MainCamera.Up * 100 ;
 
-        aura3DView.MainCamera.RotationDegrees = new Vector3(-30, 0, 0);
+        e.Scene.MainCamera.RotationDegrees = new Vector3(-30, 0, 0);
 
         var mesh = new Mesh();
 
@@ -143,7 +140,7 @@ public partial class BlendSpacePage : UserControl
              ]
         };
 
-        aura3DView.AddNode(mesh);
+        e.Scene.AddNode(mesh);
 
         dl.Position = aura3Dview.MainCamera.Position;
 

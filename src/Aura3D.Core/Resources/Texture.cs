@@ -34,17 +34,27 @@ public class Texture : BaseTexture<Texture>, IClone<Texture>, IGpuResource, ITex
 
     public uint Height { get; set; }
 
-    public List<byte>? LdrData { get; set; } = [];
+    public List<byte> LdrData { get; set; } = [];
 
-    public List<float>? HdrData { get; set; } = [];
+    public List<float> HdrData { get; set; } = [];
 
-    public Texture SetLdrData(List<byte>? data, uint width, uint height)
+    public Texture SetLdrData(List<byte> data, uint width, uint height)
     {
         LdrData = data;
         Width = width;
         Height = height;
         IsHdr = false;
         HdrData = [];
+        return this;
+    }
+
+    public Texture SetHdrData(List<float> data, uint width, uint height)
+    {
+        HdrData = data;
+        Width = width;
+        Height = height;
+        IsHdr = true;
+        LdrData = [];
         return this;
     }
 

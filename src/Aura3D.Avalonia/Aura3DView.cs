@@ -1,4 +1,5 @@
 using Aura3D.Core.Renderers;
+using Aura3D.Core.Scenes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.OpenGL;
@@ -20,11 +21,10 @@ public class Aura3DView<T> : Aura3DView where T : IRenderPipelineCreateInstance
 }
 public class Aura3DView : Aura3DViewBase
 {
-    public UpdateRoutedEventArgs updateRoutedEventArgs;
+    public UpdateRoutedEventArgs? updateRoutedEventArgs;
 
     public Aura3DView()
     {
-        updateRoutedEventArgs = new UpdateRoutedEventArgs(OnSceneUpdatedEvent);
     }
 
 
@@ -38,20 +38,20 @@ public class Aura3DView : Aura3DViewBase
     }
 
 
-    public static readonly RoutedEvent<RoutedEventArgs> SceneInitializedEvent =
-      RoutedEvent.Register<Aura3DView, RoutedEventArgs>(nameof(SceneInitialized), RoutingStrategies.Direct);
+    public static readonly RoutedEvent<InitializedRoutedEventArgs> SceneInitializedEvent =
+      RoutedEvent.Register<Aura3DView, InitializedRoutedEventArgs>(nameof(SceneInitialized), RoutingStrategies.Direct);
 
-    public event EventHandler<RoutedEventArgs> SceneInitialized
+    public event EventHandler<InitializedRoutedEventArgs> SceneInitialized
     {
         add => AddHandler(SceneInitializedEvent, value);
         remove => RemoveHandler(SceneInitializedEvent, value);
     }
 
-    public static readonly RoutedEvent<RoutedEventArgs> SceneDestroyedEvent =
-     RoutedEvent.Register<Aura3DView, RoutedEventArgs>(nameof(SceneDestroyed), RoutingStrategies.Direct);
+    public static readonly RoutedEvent<DestroyedRoutedEventArgs> SceneDestroyedEvent =
+     RoutedEvent.Register<Aura3DView, DestroyedRoutedEventArgs>(nameof(SceneDestroyed), RoutingStrategies.Direct);
 
 
-    public event EventHandler<RoutedEventArgs> SceneDestroyed
+    public event EventHandler<DestroyedRoutedEventArgs> SceneDestroyed
     {
         add => AddHandler(SceneInitializedEvent, value);
         remove => RemoveHandler(SceneInitializedEvent, value);
@@ -74,19 +74,20 @@ public class Aura3DView : Aura3DViewBase
 
     protected override void OnSceneInitialized()
     {
-        RoutedEventArgs args = new RoutedEventArgs(SceneInitializedEvent);
+        updateRoutedEventArgs = new UpdateRoutedEventArgs(OnSceneUpdatedEvent, Scene!);
+        RoutedEventArgs args = new InitializedRoutedEventArgs(SceneInitializedEvent, Scene!);
         RaiseEvent(args);
     }
 
     protected override void OnSceneDestroyed()
     {
-        RoutedEventArgs args = new RoutedEventArgs(SceneDestroyedEvent);
+        RoutedEventArgs args = new DestroyedRoutedEventArgs(SceneDestroyedEvent, Scene!);
         RaiseEvent(args);
     }
 
     protected override void OnSceneUpdated(double deltaTime)
     {
-        updateRoutedEventArgs.DeltaTime = deltaTime;
+        updateRoutedEventArgs!.DeltaTime = deltaTime;
         RaiseEvent(updateRoutedEventArgs);
     }
 }
@@ -94,8 +95,27 @@ public class Aura3DView : Aura3DViewBase
 
 public class UpdateRoutedEventArgs : RoutedEventArgs
 {
+    public Scene Scene { get; set; }
     public double DeltaTime { get; set; }
-    public UpdateRoutedEventArgs(RoutedEvent routedEvent) : base(routedEvent)
+    public UpdateRoutedEventArgs(RoutedEvent routedEvent, Scene scene) : base(routedEvent)
     {
+        Scene = scene;
+    }
+}
+
+public class InitializedRoutedEventArgs : RoutedEventArgs
+{
+    public Scene Scene { get; set; }
+    public InitializedRoutedEventArgs(RoutedEvent routedEvent, Scene scene) : base(routedEvent)
+    {
+        Scene = scene;
+    }
+}
+public class DestroyedRoutedEventArgs : RoutedEventArgs
+{
+    public Scene Scene { get; set; }
+    public DestroyedRoutedEventArgs(RoutedEvent routedEvent, Scene scene) : base(routedEvent)
+    {
+        Scene = scene;
     }
 }

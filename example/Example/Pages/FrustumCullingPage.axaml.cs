@@ -172,14 +172,8 @@ public partial class FrustumCullingPage : UserControl
         view.MainCamera.Position = new Vector3(camX, camY, camZ);
 
     }
-    private void Aura3DView_SceneInitialized(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void Aura3DView_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
-        var view = sender as Aura3DView;
-
-        if (view == null)
-        {
-            return;
-        }
 
         Build(aura3Dview, 1000);
 
@@ -189,7 +183,7 @@ public partial class FrustumCullingPage : UserControl
 
         dl.LightColor = Color.Red;
 
-        view.AddNode(dl);
+        e.Scene.AddNode(dl);
 
     }
 

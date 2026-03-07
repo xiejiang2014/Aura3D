@@ -9,7 +9,6 @@ public static class TextureLoader
     {
         var texture = new Texture();
 
-
         ImageResult? imageResult = null;
         if (stream.CanSeek)
         {
@@ -98,7 +97,7 @@ public static class TextureLoader
 
             }
 
-            cubeTexture.Data[i].AddRange(imageResult.Data);
+            cubeTexture.LdrData[i].AddRange(imageResult.Data);
 
             if (i == 0)
             {
@@ -131,5 +130,37 @@ public static class TextureLoader
         return cubeTexture;
     }
 
+    public static Texture LoadHdrTexture(Stream stream)
+    {
+        var texture = new Texture();
 
+        ImageResultFloat? imageResult = null;
+        if (stream.CanSeek)
+        {
+            imageResult = ImageResultFloat.FromStream(stream);
+        }
+        else
+        {
+            using (var ms = new MemoryStream())
+            {
+                stream.CopyTo(ms);
+                ms.Seek(0, SeekOrigin.Begin);
+                imageResult = ImageResultFloat.FromStream(ms);
+            }
+
+        }
+
+        texture.SetHdrData([.. imageResult.Data], (uint)imageResult.Width, (uint)imageResult.Height)
+            .SetColorFormat(imageResult.Comp switch
+            {
+                ColorComponents.RedGreenBlue => ColorFormat.RGB,
+                ColorComponents.RedGreenBlueAlpha => ColorFormat.RGBA,
+                _ => throw new NotSupportedException("Unsupported color format")
+            })
+            .SetMinFilter(TextureFilterMode.Linear)
+            .SetMagFilter(TextureFilterMode.Linear);
+
+
+        return texture;
+    }
 }

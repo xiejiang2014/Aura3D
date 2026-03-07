@@ -88,34 +88,29 @@ public partial class PbrPipelinePage : UserControl
             }
             if (e.Key == Avalonia.Input.Key.W)
             {
-                aura3Dview.MainCamera!.Position += aura3Dview.MainCamera.Forward * (float)deltaTime;
+                aura3Dview.MainCamera!.Position += aura3Dview.MainCamera.Forward * 5 * (float)deltaTime;
             }
             else if (e.Key == Avalonia.Input.Key.S)
             {
-                aura3Dview.MainCamera!.Position -= aura3Dview.MainCamera.Forward * (float)deltaTime;
+                aura3Dview.MainCamera!.Position -= aura3Dview.MainCamera.Forward * 5 * (float)deltaTime;
             }
             else if (e.Key == Avalonia.Input.Key.A)
             {
-                aura3Dview.MainCamera!.Position -= aura3Dview.MainCamera.Right * (float)deltaTime;
+                aura3Dview.MainCamera!.Position -= aura3Dview.MainCamera.Right * 5 * (float)deltaTime;
             }
             else if (e.Key == Avalonia.Input.Key.D)
             {
-                aura3Dview.MainCamera!.Position += aura3Dview.MainCamera.Right * (float)deltaTime;
+                aura3Dview.MainCamera!.Position += aura3Dview.MainCamera.Right * 5 * (float)deltaTime;
             }
         };
 
     }
 
-    private async void Aura3DView_SceneInitialized(object? sender, RoutedEventArgs e)
+    private async void Aura3DView_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
-        var view = sender as Aura3DView;
 
         InitEvent();
 
-        if (view == null)
-        {
-            return;
-        }
         try
         {
 
@@ -137,19 +132,19 @@ public partial class PbrPipelinePage : UserControl
 
                     mesh.Material.SetTexture("MetallicRoughness", Texture.CreateFromColor(Color.FromArgb((255 / 7) * i, (255 / 7) * j, 0)));
 
-                    var v = view.MainCamera.Position + view.MainCamera.Forward * 2;
+                    var v = e.Scene.MainCamera.Position + e.Scene.MainCamera.Forward * 2;
 
                     mesh.Position = new Vector3(i * 3, j * 3, v.Z);
 
 
-                    view.AddNode(mesh);
+                    e.Scene.AddNode(mesh);
 
                 }
 
             }
 
-            view.MainCamera.Position = new Vector3(-1.1829785F, 8.988152F, 9.307376F);
-            view.MainCamera.RotationDegrees = new Vector3(1.1555548F, -31.027235F, 0);
+            e.Scene.MainCamera.Position = new Vector3(-1.1829785F, 8.988152F, 9.307376F);
+            e.Scene.MainCamera.RotationDegrees = new Vector3(1.1555548F, -31.027235F, 0);
 
             var dl = new DirectionalLight();
 
@@ -157,7 +152,16 @@ public partial class PbrPipelinePage : UserControl
 
             dl.LightColor = Color.White;
 
-            view.AddNode(dl);
+            e.Scene.AddNode(dl);
+
+            using (var stream = AssetLoader.Open(new Uri($"avares://Example/Assets/Textures/buikslotermeerplein_1k.hdr")))
+            {
+                var hdriTexture = TextureLoader.LoadHdrTexture(stream);
+
+                var cubemap = HDRIToCubeTextureConverter.ConvertFromTexture(hdriTexture, 1024);
+
+                e.Scene.Background = cubemap;
+            }
 
 
         }

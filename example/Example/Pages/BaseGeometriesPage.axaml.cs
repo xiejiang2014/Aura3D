@@ -31,7 +31,7 @@ public partial class BaseGeometriesPage : UserControl
     CylinderGeometry cylinder;
     PlaneGeometry plane;
 
-    private async void Aura3DView_SceneInitialized(object? sender, RoutedEventArgs e)
+    private async void Aura3DView_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
         var view = sender as Aura3DView;
 

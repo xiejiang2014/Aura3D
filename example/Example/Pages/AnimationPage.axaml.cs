@@ -27,7 +27,7 @@ public partial class AnimationPage : UserControl
     List<Animation> animations = [];
     Model? model;
     AnimationSampler? animationSampler;
-    private async void Aura3DView_SceneInitialized(object? sender, RoutedEventArgs e)
+    private async void Aura3DView_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
         if (sender is Aura3DView view == false)
             return;

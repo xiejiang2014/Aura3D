@@ -1,3 +1,4 @@
+using Aura3D.Avalonia;
 using Aura3D.Core;
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
@@ -19,7 +20,7 @@ public partial class AnimationGraphPage : UserControl
         InitializeComponent();
     }
 
-    private void aura3Dview_SceneInitialized(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void aura3Dview_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
         var vm = DataContext as AnimationGraphViewModel;
         if (vm == null)

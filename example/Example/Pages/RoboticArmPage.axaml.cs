@@ -101,16 +101,13 @@ public partial class RoboticArmPage : UserControl
     Node item7 = new Node();
 
     Model? model = null;
-    private async void Aura3DView_SceneInitialized(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void Aura3DView_SceneInitialized(object? sender, InitializedRoutedEventArgs e)
     {
-        var view = sender as Aura3DView;
-        if (view == null)
-            return;
-
         while (App.model == null)
         {
             await Task.Delay(10);
         }
+        var scene = e.Scene;
 
         var model = App.model.Clone(CopyType.SharedResourceData);
 
@@ -123,9 +120,9 @@ public partial class RoboticArmPage : UserControl
         item6 = model.Meshes.First(mesh => mesh.Name == "item6");
         item7 = model.Meshes.First(mesh => mesh.Name == "item7");
 
-        model.Position = view.MainCamera.Position + view.MainCamera.Forward * 2f - view.MainCamera.Up;
+        model.Position = scene.MainCamera.Position + scene.MainCamera.Forward * 2f - scene.MainCamera.Up;
 
-        view.AddNode(model);
+        scene.AddNode(model);
 
         var dl = new DirectionalLight();
 
@@ -133,7 +130,7 @@ public partial class RoboticArmPage : UserControl
 
         dl.LightColor = Color.White;
 
-        view.AddNode(dl);
+        scene.AddNode(dl);
 
         slider1.Value = CalcDegree(item2.RotationDegrees.Y);
         slider2.Value = CalcDegree(item3.RotationDegrees.X);

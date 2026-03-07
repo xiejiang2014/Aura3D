@@ -27,12 +27,18 @@ window.Load += () =>
         window.GLContext.TryGetProcAddress(str, out var p);
         return p;
     });
+    using var hdriFileStream = new StreamReader("../../../../../../example/Example/Assets/Textures/buikslotermeerplein_1k.hdr");
+
+    var hdriTexture = TextureLoader.LoadHdrTexture(hdriFileStream.BaseStream);
+
+    var cubemap = HDRIToCubeTextureConverter.ConvertFromTexture(hdriTexture, 1024);
+
+    scene.Background = cubemap;
 
     var camera = scene.MainCamera;
 
     camera.ClearColor = Color.Gray;
     camera.NearPlane = 1;
-    camera.IsRenderBackground = false;
 
     var list = new List<Stream>();
     List<string> name =
@@ -58,7 +64,7 @@ window.Load += () =>
     }
 
 
-    scene.Background = cubeTexture;
+   // scene.Background = cubeTexture;
 
     var (model, animations) = ModelLoader.LoadGlbModelAndAnimations($"../../../../../../example/Example/Assets/Models/wooden_stool_02_1k.glb");
 
