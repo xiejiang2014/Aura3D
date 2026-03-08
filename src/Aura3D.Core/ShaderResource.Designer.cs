@@ -472,7 +472,33 @@ namespace Aura3D.Core {
         }
         
         /// <summary>
-        ///   查找类似  的本地化字符串。
+        ///   查找类似 #version 300 es
+        ///precision highp float;
+        ///precision highp sampler2D;
+        ///precision highp samplerCube;
+        ///
+        /////{{defines}}
+        ///
+        ///layout(location = 0) out vec4 o_iblColor;
+        ///
+        ///#ifdef ENBALE_DEFERRED_SHADING
+        ///
+        ///in vec2 v_texCoord;
+        ///in vec4 v_clipPos;
+        ///
+        ///uniform sampler2D gBufferBaseColor;
+        ///uniform sampler2D gBufferNormalRoughness;
+        ///uniform sampler2D gBufferMetallicEmissive;
+        ///uniform sampler2D depthTexture;
+        ///
+        ///
+        ///#else 
+        ///
+        ///in vec2 vTexCoord;
+        ///in vec3 vFragPosition;
+        ///in mat3 vTBN;
+        ///uniform sampler2D Texture_BaseColor;
+        ///unif [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         public static string pbr_ibl_ambient_frag {
             get {

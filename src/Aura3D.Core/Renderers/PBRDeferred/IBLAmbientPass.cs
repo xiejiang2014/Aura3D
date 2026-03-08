@@ -1,16 +1,18 @@
 ﻿using Aura3D.Core.Math;
 using Aura3D.Core.Nodes;
+using Aura3D.Core.Resources;
 using Silk.NET.OpenGLES;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Aura3D.Core.Renderers.PBRDeferred;
 
-internal class IBLAmbientPass : RenderPass
+internal class IBLAmbientPass : RenderPass<PBRDeferredPipeline>
 {
     string gbufferRenderTargetName;
     RenderTarget _brdfLutRenderTarget;
@@ -54,9 +56,6 @@ void main() {
 
     public override void Render(Camera camera)
     {
-        if (Scene.Background.IsT0 == false || Scene.Background.AsT0 == null)
-            return;
-
         var size = new Size((int)camera.RenderTarget.Width, (int)camera.RenderTarget.Height);
         var rt = GetRenderTarget(gbufferRenderTargetName, size);
 
@@ -74,7 +73,7 @@ void main() {
         var perfilteredEnvMap = camera.GetPipelineGpuResource<CubeRenderTarget>("PrefilteredEnvironmentMap");
         var u_prefilterMap = perfilteredEnvMap.GetTexture(0);
 
-
+        UseShader("ENBALE_DEFERRED_SHADING");
         UseShader_Internal(null);
         ClearTextureUnit();
 
@@ -92,7 +91,11 @@ void main() {
         UniformMatrix4(nameof(u_projMatrix), u_projMatrix);
         UniformMatrix4(nameof(u_invViewProjMatrix), u_invViewProjMatrix);
         UniformVector3("u_cameraPos", camera.WorldTransform.Translation);
-      
+
+        int nearestPowerOfTwo = (int)MathF.Pow(2, MathF.Floor(MathF.Log2(u_prefilterMap.Width)));
+        var mipmap =  BitOperations.TrailingZeroCount((uint)nearestPowerOfTwo) + 1;
+
+        UniformFloat("u_max_mipmap", mipmap);
         RenderQuad();
     }
 

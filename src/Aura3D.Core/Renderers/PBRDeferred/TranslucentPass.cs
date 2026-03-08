@@ -226,10 +226,9 @@ internal class TranslucentPass : RenderPass<PBRDeferredPipeline>
 
 
         {
-
+            ClearTextureUnit();
             var baseColor = mesh.Material?.GetTexture("BaseColor") ?? defaultBaseColor;
             UniformTexture("Texture_BaseColor", baseColor);
-
 
             var normal = mesh.Material?.GetTexture("Normal") ?? defaultNormal;
             UniformTexture("Texture_Normal", normal);
@@ -243,6 +242,9 @@ internal class TranslucentPass : RenderPass<PBRDeferredPipeline>
 
             var emissive = mesh.Material?.GetTexture("Emissive") ?? defaultEmissive;
             UniformTexture("Texture_Emissive", emissive);
+
+
+
         }
 
 

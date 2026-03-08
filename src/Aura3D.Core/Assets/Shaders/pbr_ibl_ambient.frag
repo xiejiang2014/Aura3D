@@ -3,15 +3,33 @@ precision highp float;
 precision highp sampler2D;
 precision highp samplerCube;
 
-in vec2 v_texCoord;
-in vec4 v_clipPos;
+//{{defines}}
 
 layout(location = 0) out vec4 o_iblColor;
+
+#ifdef ENBALE_DEFERRED_SHADING
+
+in vec2 v_texCoord;
+in vec4 v_clipPos;
 
 uniform sampler2D gBufferBaseColor;
 uniform sampler2D gBufferNormalRoughness;
 uniform sampler2D gBufferMetallicEmissive;
 uniform sampler2D depthTexture;
+
+
+#else 
+
+in vec2 vTexCoord;
+in vec3 vFragPosition;
+in mat3 vTBN;
+uniform sampler2D Texture_BaseColor;
+uniform sampler2D Texture_Normal;
+uniform sampler2D Texture_MetallicRoughness;
+uniform sampler2D Texture_Emissive;
+uniform sampler2D Texture_Occlusion;
+
+#endif
 
 uniform samplerCube u_irradianceMap;
 uniform samplerCube u_prefilterMap;
@@ -21,9 +39,9 @@ uniform mat4 u_viewMatrix;
 uniform mat4 u_projMatrix;
 uniform mat4 u_invViewProjMatrix;
 uniform vec3 u_cameraPos;
+uniform float u_max_mipmap;
 
 const float PI = 3.14159265359;
-const float MAX_REFLECTION_LOD = 4.0;
 const float EPSILON = 0.0001;
 
 vec3 reconstructWorldPosition(vec2 texCoord, float depth) {
@@ -39,10 +57,12 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
 }
 
 void main() {
+
+#ifdef ENBALE_DEFERRED_SHADING
     // Sample base color (albedo)
     vec4 basecolor = texture(gBufferBaseColor, v_texCoord);
     vec3 albedo = basecolor.rgb;
-
+    float alpha = basecolor.a;
     // Sample normal and roughness
     vec3 normal = normalize(texture(gBufferNormalRoughness, v_texCoord).rgb);
 	normal = normalize(normal * 2.0 - 1.0);
@@ -56,6 +76,27 @@ void main() {
     float depth = texture(depthTexture, v_texCoord).r;
     vec3 worldPos = reconstructWorldPosition(v_texCoord, depth);
 
+#else
+
+    vec4 baseColor = texture(Texture_BaseColor, vTexCoord);
+    vec3 normal = texture(Texture_Normal, vTexCoord).xyz;
+    vec4 metalness_roughness = texture(Texture_MetallicRoughness, vTexCoord);
+
+    vec3 albedo = baseColor.rgb;
+    float alpha = baseColor.a;
+   
+    normal = normalize(normal.xyz * 2.0 - 1.0);
+    normal = normalize(vTBN * normal);
+
+	if (!gl_FrontFacing) 
+	{
+		normal = -normal;
+	}
+
+    float roughness = metalness_roughness.y;
+    float metallic = metalness_roughness.x;
+    vec3 worldPos = vFragPosition;
+#endif
     // Clamp parameters to valid range
     roughness = clamp(roughness, 0.01, 1.0);
     metallic = clamp(metallic, 0.0, 1.0);
@@ -83,7 +124,7 @@ void main() {
 
     // Calculate specular IBL
     vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
-    vec3 prefilteredColor = textureLod(u_prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+    vec3 prefilteredColor = textureLod(u_prefilterMap, R, roughness * u_max_mipmap).rgb;
     vec2 brdf = texture(u_brdfLUT, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
@@ -94,5 +135,5 @@ void main() {
 
     // Output final IBL color
     vec3 ambient = diffuse + specular;
-    o_iblColor = vec4(ambient, basecolor.a);
+    o_iblColor = vec4(ambient, alpha);
 }

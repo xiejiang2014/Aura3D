@@ -1,5 +1,6 @@
 ﻿using Aura3D.Core.Nodes;
 using Aura3D.Core.Renderers.Common;
+using Aura3D.Core.Resources;
 using Aura3D.Core.Scenes;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,29 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
     public Resources.Texture DefaultEmissive { get; private set; }
 
     public Resources.Texture DefaultOcclusion { get; private set; }
+
+    public Resources.CubeTexture DefaultIblAmbientCubeTexture
+    {
+        get
+        {
+            if (_defaultIblAmbientCubeTexture == null)
+            {
+
+                var texture = Texture.CreateFromColor(Color.White);
+
+                var cube = HDRIToCubeTextureConverter.ConvertFromTexture(texture, 16);
+
+                _defaultIblAmbientCubeTexture = cube;
+
+                cube.Upload(gl);
+
+            }
+
+            return _defaultIblAmbientCubeTexture;
+        }
+    }
+
+    private Resources.CubeTexture? _defaultIblAmbientCubeTexture = null;
 
     private RenderTarget _brdfLutRenderTarget;
 
@@ -62,7 +86,7 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
 
         RegisterRenderPass(new CopyPass(this, "BaseRenderTarget", "Color").SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
 
-        RegisterRenderPass(new TranslucentConstantAmbientPass(this, "GBuffer").SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
+        RegisterRenderPass(new TranslucentIBLAmbientPass(this, "GBuffer", _brdfLutRenderTarget).SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
 
         RegisterRenderPass(new TranslucentPass(this, "GBuffer").SetOutPutRenderTarget("BackgroundRenderTarget"), RenderPassGroup.EveryCamera);
 

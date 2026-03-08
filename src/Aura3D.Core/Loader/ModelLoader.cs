@@ -295,6 +295,34 @@ public static class ModelLoader
                         texture.SetIsGammaSpace(true);
                     }
 
+                    if (channel.Name == "MetallicRoughness")
+                    {
+
+                        var texture = (Texture)channel.Texture;
+                        var metallicFactor = gltfChannel.GetFactor("MetallicFactor");
+                        var roughnessFactor = gltfChannel.GetFactor("RoughnessFactor");
+
+                        int step = texture.ColorFormat == ColorFormat.RGB ? 3 : 4;
+                        for(int i = 0; i < texture.Width * texture.Height * step; i += step)
+                        {
+                            if (texture.IsHdr == true)
+                            {
+                                var r = texture.HdrData[i];
+                                texture.HdrData[i] = r * metallicFactor;
+                                var g = texture.HdrData[i + 1];
+                                texture.HdrData[i + 1] = g * roughnessFactor;
+                            }
+                            else
+                            {
+                                var r = texture.LdrData[i];
+                                texture.LdrData[i] = (byte)(r * metallicFactor);
+
+                                var g = texture.LdrData[i + 1];
+                                texture.LdrData[i + 1] = (byte)(g * roughnessFactor);
+                            }
+                        }
+                    }
+
                     if (gltfChannel.TextureSampler != null)
                     {
                         if (channel.Texture != null && channel.Texture is Texture texture)

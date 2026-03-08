@@ -30,6 +30,7 @@ public class CubeRenderTarget : IRenderTarget
 
     public int MipmapLevel { get; private set; } = 1;
 
+
     public CubeRenderTarget SetMipMapLevel(int mipmapLevel)
     {
         MipmapLevel = mipmapLevel;

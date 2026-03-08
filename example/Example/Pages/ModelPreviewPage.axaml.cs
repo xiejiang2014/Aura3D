@@ -293,35 +293,18 @@ public partial class ModelPreviewPage : UserControl
 
         dl.LightColor = Color.White;
 
-        var camera = e.Scene.MainCamera;
-
-        var list = new List<Stream>();
-        List<string> name =
-        [
-            "px.png",
-        "nx.png",
-        "py.png",
-        "ny.png",
-        "pz.png",
-        "nz.png",
-    ];
-        foreach (var filename in name)
-        {
-            var stream = AssetLoader.Open(new Uri($"avares://Example/Assets/Textures/skybox/{filename}"));
-            
-            list.Add(stream);
-        }
-
-        var cubeTexture = TextureLoader.LoadCubeTexture(list);
-
-        foreach (var stream in list)
-        {
-            stream.Dispose();
-        }
-
-        e.Scene.Background = cubeTexture;
-
         e.Scene.AddNode(dl);
+
+
+
+        using (var stream = AssetLoader.Open(new Uri($"avares://Example/Assets/Textures/buikslotermeerplein_1k.hdr")))
+        {
+            var hdriTexture = TextureLoader.LoadHdrTexture(stream);
+
+            var cubemap = HDRIToCubeTextureConverter.ConvertFromTexture(hdriTexture, 1024);
+
+            e.Scene.Background = cubemap;
+        }
     }
 
     private void Aura3DView_SceneUpdated(object? sender, Aura3D.Avalonia.UpdateRoutedEventArgs e)

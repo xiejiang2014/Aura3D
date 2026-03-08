@@ -102,7 +102,7 @@ public class TestView
 
         // scene.Background = cubeTexture;
 
-        var (model, animations) = ModelLoader.LoadGlbModelAndAnimations(loadFileFun("Models/wooden_stool_02_1k.glb"));
+        var (model, animations) = ModelLoader.LoadGlbModelAndAnimations(loadFileFun("Models/lightbulb_01_1k.glb"));
 
         scene.AddNode(model);
 

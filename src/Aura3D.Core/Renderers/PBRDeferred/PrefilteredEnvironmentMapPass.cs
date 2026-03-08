@@ -1,4 +1,5 @@
 ﻿using Aura3D.Core.Nodes;
+using Aura3D.Core.Resources;
 using Silk.NET.OpenGLES;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Aura3D.Core.Renderers.PBRDeferred;
 
-internal class PrefilteredEnvironmentMapPass : RenderPass
+internal class PrefilteredEnvironmentMapPass : RenderPass<PBRDeferredPipeline>
 {
     const int PREFILTER_WIDTH = 256;
 
@@ -92,9 +93,17 @@ internal class PrefilteredEnvironmentMapPass : RenderPass
 
     public override void Render(Camera camera)
     {
-        if (this.Scene.Background.IsT0 == false || Scene.Background.AsT0 == null)
-            return;
-        var iblTexture = Scene.Background.AsT0;
+        CubeTexture? iblTexture = null;
+        if (Scene.Background.IsT0 == false || Scene.Background.AsT0 == null)
+        {
+            iblTexture = this.RenderPipeline.DefaultIblAmbientCubeTexture;
+        }
+        else
+        {
+            iblTexture = Scene.Background.AsT0;
+        }
+
+
         var perfilteredEnvMap = camera.GetPipelineGpuResource<CubeRenderTarget>("PrefilteredEnvironmentMap");
         if (perfilteredEnvMap != null)
             return;

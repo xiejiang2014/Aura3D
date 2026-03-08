@@ -1,10 +1,11 @@
 ﻿using Aura3D.Core.Nodes;
+using Aura3D.Core.Resources;
 using Silk.NET.OpenGLES;
 using System.Numerics;
 
 namespace Aura3D.Core.Renderers.PBRDeferred;
 
-internal class IrradianceMapPass : RenderPass
+internal class IrradianceMapPass : RenderPass<PBRDeferredPipeline>
 {
     const uint _irradianceMapSize = 64;
 
@@ -75,8 +76,15 @@ void main()
 
     public override void Render(Camera camera)
     {
+        CubeTexture? ibl = null;
         if (Scene.Background.IsT0 == false || Scene.Background.AsT0 == null)
-            return;
+        {
+            ibl = this.RenderPipeline.DefaultIblAmbientCubeTexture;
+        }
+        else
+        {
+            ibl = Scene.Background.AsT0;
+        }
 
         var irradianceMap = camera.GetPipelineGpuResource<CubeRenderTarget>("IrradianceMap");
 
@@ -134,7 +142,7 @@ void main()
             
             gl.ActiveTexture(TextureUnit.Texture0);
             
-            gl.BindTexture(TextureTarget.TextureCubeMap, Scene.Background.AsT0.TextureId);
+            gl.BindTexture(TextureTarget.TextureCubeMap, ibl.TextureId);
 
             RenderCube();
 
