@@ -354,6 +354,8 @@ public partial class Node
         else
         {
             child.Parent = this;
+
+            child.updateWorldTransform();
         }
        
 
