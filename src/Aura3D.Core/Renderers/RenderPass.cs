@@ -36,6 +36,10 @@ public partial class RenderPass
 
     }
 
+    public virtual void Destory()
+    {
+
+    }
     public bool EnableFrustumCulling => renderPipeline.EnableFrustumCulling;
 
     public virtual void BeforeRender(Camera camera)

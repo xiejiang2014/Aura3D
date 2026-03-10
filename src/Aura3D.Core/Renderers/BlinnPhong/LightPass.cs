@@ -57,6 +57,13 @@ public class LightPass : RenderPass
         defaultBaseColor.Upload(gl);
         defaultNormal.Upload(gl);
     }
+
+    public override void Destory()
+    {
+        defaultBaseColor.Destroy(gl);
+        defaultNormal.Destroy(gl);
+    }
+
     public override void BeforeRender(Camera camera)
     {
         gl.Disable(EnableCap.Blend);

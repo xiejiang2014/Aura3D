@@ -358,14 +358,24 @@ public abstract partial class RenderPipeline
         gl.DrawElements(GLEnum.Triangles, 6, GLEnum.UnsignedInt, (void*)0);
     }
 
-    public void Destroy()
+    public virtual void Destroy()
     {
         foreach(var gpuResource in GpuResources)
         {
             gpuResource.Destroy(gl!);
+            gpuResource.NeedsUpload = true;
         }
 
         GpuResources.Clear();
+
+        foreach (var pass in OnceRenderPasses)
+        {
+            pass.Destory();
+        }
+        foreach (var pass in EveryCameraRenderPasses)
+        {
+            pass.Destory();
+        }
 
         Meshes.Clear();
 
@@ -374,6 +384,7 @@ public abstract partial class RenderPipeline
         PointLights.Clear();
 
         SpotLights.Clear();
+
 
     }
 

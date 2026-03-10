@@ -150,4 +150,15 @@ public class PBRDeferredPipeline : RenderPipeline, IRenderPipelineCreateInstance
         BrdfLutTexture.Upload(gl);
     }
 
+    public override void Destroy()
+    {
+        base.Destroy();
+        DefaultBaseColor.Destroy(gl);
+        DefaultNormal.Destroy(gl);
+        DefaultMetallicRoughness.Destroy(gl);
+        DefaultEmissive.Destroy(gl);
+        DefaultOcclusion.Destroy(gl);
+        BrdfLutTexture.Destroy(gl);
+
+    }
 }
