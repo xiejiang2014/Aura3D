@@ -87,7 +87,7 @@ public partial class CelShadingPage : UserControl
     {
         var view = (Aura3DView)sender;
 
-        camera = new Camera();
+        camera = view.MainCamera;
 
         camera.ProjectionType = ProjectionType.Perspective;
 
@@ -116,9 +116,6 @@ public partial class CelShadingPage : UserControl
         }
 
         view.Scene.Background = cubeTexture;
-
-
-        view.AddNode(camera);
 
         PointLight pl = new PointLight();
 
