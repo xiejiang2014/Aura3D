@@ -434,9 +434,9 @@ public static class AssimpLoader
                 StbImage.stbi_set_flip_vertically_on_load_thread(1);
                 try
                 {
-                    using (var sr = new StreamReader(filePath))
+                    using (var stream = File.OpenRead(filePath))
                     {
-                        return TextureLoader.LoadTexture(sr.BaseStream);
+                        return TextureLoader.LoadTexture(stream);
                     }
                 }
                 catch(FileNotFoundException)

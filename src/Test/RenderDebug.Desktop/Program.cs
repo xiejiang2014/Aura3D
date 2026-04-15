@@ -36,7 +36,7 @@ window.Load += () =>
 
     var inputContext = window.CreateInput();
 
-    testView = new TestView(scene, inputContext, name => new StreamReader($"../../../../../../example/Example/Assets/{name}").BaseStream);
+    testView = new TestView(scene, inputContext, name => File.OpenRead($"../../../../../../example/Example/Assets/{name}"));
 
     testView.OnInit();
 

@@ -13,14 +13,18 @@ public  abstract partial class RenderPipeline
     {
         foreach (var (name, rtMap) in RenderTargets)
         {
+            var expiredSizes = new List<Size>();
             foreach (var (rtSize, (rt, dateTime)) in rtMap)
             {
                 if (DateTime.Now - dateTime > TimeSpan.FromSeconds(1))
                 {
                     rt.Destroy(gl!);
-                    rtMap.Remove(rtSize);
-                    break;
+                    expiredSizes.Add(rtSize);
                 }
+            }
+            foreach (var rtSize in expiredSizes)
+            {
+                rtMap.Remove(rtSize);
             }
         }
     }

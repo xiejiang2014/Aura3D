@@ -44,9 +44,9 @@ public static class ModelLoader
 
     public static (Model, List<Resources.Animation>) LoadGlbModelAndAnimations(string filePath)
     {
-        using (var streamReader = new StreamReader(filePath))
+        using (var stream = File.OpenRead(filePath))
         {
-            return LoadGlbModelAndAnimations(streamReader.BaseStream);
+            return LoadGlbModelAndAnimations(stream);
         }
     }
 
@@ -79,9 +79,9 @@ public static class ModelLoader
 
     public static Model LoadGlbModel(string filePath)
     {
-        using (var streamReader = new StreamReader(filePath))
+        using (var stream = File.OpenRead(filePath))
         {
-            return LoadGlbModel(streamReader.BaseStream);
+            return LoadGlbModel(stream);
         }
     }
 
@@ -116,9 +116,9 @@ public static class ModelLoader
 
     public static List<Resources.Animation> LoadGlbAnimations(string filePath, Skeleton? skeleton = null)
     {
-        using (var sr = new StreamReader(filePath))
+        using (var stream = File.OpenRead(filePath))
         {
-            return LoadGlbAnimations(sr.BaseStream);
+            return LoadGlbAnimations(stream);
         }
     }
     public static List<Resources.Animation> LoadGlbAnimations(Stream stream, Skeleton? skeleton = null)

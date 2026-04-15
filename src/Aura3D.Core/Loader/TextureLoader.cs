@@ -56,7 +56,7 @@ public static class TextureLoader
 
         foreach (var fileName in fileNames)
         {
-            streams.Add(new StreamReader(fileName).BaseStream);
+            streams.Add(File.OpenRead(fileName));
         }
 
         try
