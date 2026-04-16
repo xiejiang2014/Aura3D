@@ -17,6 +17,35 @@ public class LightPass : RenderPass
     private int directionalLightLimit;
     private int pointLightLimit;
     private int spotLightLimit;
+
+    // Uniform 名称缓存，避免每帧重复分配字符串
+    private readonly string[] _directionalLightDirectionUniforms;
+    private readonly string[] _directionalLightColorUniforms;
+    private readonly string[] _directionalLightCastShadowUniforms;
+    private readonly string[] _directionalLightShadowMapUniforms;
+    private readonly string[] _directionalLightShadowMapMatrixUniforms;
+
+    private readonly string[] _pointLightColorUniforms;
+    private readonly string[] _pointLightPositionUniforms;
+    private readonly string[] _pointLightRadiusUniforms;
+    private readonly string[] _pointLightSoftRatioUniforms;
+    private readonly string[] _pointLightCastShadowUniforms;
+    private readonly string[] _pointLightShadowMapUniforms;
+    private readonly string[][] _pointLightShadowMapMatricesUniforms;
+
+    private readonly string[] _spotLightColorUniforms;
+    private readonly string[] _spotLightPositionUniforms;
+    private readonly string[] _spotLightDirectionUniforms;
+    private readonly string[] _spotLightInnerConeCosUniforms;
+    private readonly string[] _spotLightOuterConeCosUniforms;
+    private readonly string[] _spotLightRadiusUniforms;
+    private readonly string[] _spotLightSoftRatioUniforms;
+    private readonly string[] _spotLightCastShadowUniforms;
+    private readonly string[] _spotLightShadowMapUniforms;
+    private readonly string[] _spotLightShadowMapMatrixUniforms;
+
+    private const int MaxLightLimit = 10;
+
     public void UpdateLightNumLimit(int directionalLightLimit, int pointLightLimit, int spotLightLimit)
     {
         FragmentShader = ShaderResource.MeshFrag
@@ -51,6 +80,65 @@ public class LightPass : RenderPass
         defaultBaseColor = Resources.Texture.CreateFromColor(Color.White);
 
         defaultNormal = Resources.Texture.CreateFromColor(Color.FromArgb(255, 128, 128, 255));
+
+        // 初始化 Uniform 名称缓存
+        _directionalLightDirectionUniforms = new string[MaxLightLimit];
+        _directionalLightColorUniforms = new string[MaxLightLimit];
+        _directionalLightCastShadowUniforms = new string[MaxLightLimit];
+        _directionalLightShadowMapUniforms = new string[MaxLightLimit];
+        _directionalLightShadowMapMatrixUniforms = new string[MaxLightLimit];
+
+        _pointLightColorUniforms = new string[MaxLightLimit];
+        _pointLightPositionUniforms = new string[MaxLightLimit];
+        _pointLightRadiusUniforms = new string[MaxLightLimit];
+        _pointLightSoftRatioUniforms = new string[MaxLightLimit];
+        _pointLightCastShadowUniforms = new string[MaxLightLimit];
+        _pointLightShadowMapUniforms = new string[MaxLightLimit];
+        _pointLightShadowMapMatricesUniforms = new string[MaxLightLimit][];
+
+        _spotLightColorUniforms = new string[MaxLightLimit];
+        _spotLightPositionUniforms = new string[MaxLightLimit];
+        _spotLightDirectionUniforms = new string[MaxLightLimit];
+        _spotLightInnerConeCosUniforms = new string[MaxLightLimit];
+        _spotLightOuterConeCosUniforms = new string[MaxLightLimit];
+        _spotLightRadiusUniforms = new string[MaxLightLimit];
+        _spotLightSoftRatioUniforms = new string[MaxLightLimit];
+        _spotLightCastShadowUniforms = new string[MaxLightLimit];
+        _spotLightShadowMapUniforms = new string[MaxLightLimit];
+        _spotLightShadowMapMatrixUniforms = new string[MaxLightLimit];
+
+        for (int i = 0; i < MaxLightLimit; i++)
+        {
+            _directionalLightDirectionUniforms[i] = $"DirectionalLights[{i}].direction";
+            _directionalLightColorUniforms[i] = $"DirectionalLights[{i}].color";
+            _directionalLightCastShadowUniforms[i] = $"DirectionalLights[{i}].castShadow";
+            _directionalLightShadowMapUniforms[i] = $"DirectionalLightShadowMaps[{i}]";
+            _directionalLightShadowMapMatrixUniforms[i] = $"DirectionalLights[{i}].shadowMapMatrix";
+
+            _pointLightColorUniforms[i] = $"PointLights[{i}].color";
+            _pointLightPositionUniforms[i] = $"PointLights[{i}].position";
+            _pointLightRadiusUniforms[i] = $"PointLights[{i}].radius";
+            _pointLightSoftRatioUniforms[i] = $"PointLights[{i}].softRatio";
+            _pointLightCastShadowUniforms[i] = $"PointLights[{i}].castShadow";
+            _pointLightShadowMapUniforms[i] = $"PointLightShadowMaps[{i}]";
+
+            _pointLightShadowMapMatricesUniforms[i] = new string[6];
+            for (int j = 0; j < 6; j++)
+            {
+                _pointLightShadowMapMatricesUniforms[i][j] = $"PointLights[{i}].shadowMapMatrices[{j}]";
+            }
+
+            _spotLightColorUniforms[i] = $"SpotLights[{i}].color";
+            _spotLightPositionUniforms[i] = $"SpotLights[{i}].position";
+            _spotLightDirectionUniforms[i] = $"SpotLights[{i}].direction";
+            _spotLightInnerConeCosUniforms[i] = $"SpotLights[{i}].inner_cone_cos";
+            _spotLightOuterConeCosUniforms[i] = $"SpotLights[{i}].outer_cone_cos";
+            _spotLightRadiusUniforms[i] = $"SpotLights[{i}].radius";
+            _spotLightSoftRatioUniforms[i] = $"SpotLights[{i}].softRatio";
+            _spotLightCastShadowUniforms[i] = $"SpotLights[{i}].castShadow";
+            _spotLightShadowMapUniforms[i] = $"SpotLightShadowMaps[{i}]";
+            _spotLightShadowMapMatrixUniforms[i] = $"SpotLights[{i}].shadowMapMatrix";
+        }
     }
     public override void Setup()
     {
@@ -127,17 +215,17 @@ public class LightPass : RenderPass
 
     private void SetupInactiveDirectionalLight(int index)
     {
-        UniformVector3($"DirectionalLights[{index}].direction", Vector3.Zero);
-        UniformVector3($"DirectionalLights[{index}].color", Vector3.Zero);
-        UniformTexture($"DirectionalLightShadowMaps[{index}]", 0);
-        UniformMatrix4($"DirectionalLights[{index}].shadowMapMatrix", Matrix4x4.Identity);
+        UniformVector3(_directionalLightDirectionUniforms[index], Vector3.Zero);
+        UniformVector3(_directionalLightColorUniforms[index], Vector3.Zero);
+        UniformTexture(_directionalLightShadowMapUniforms[index], 0);
+        UniformMatrix4(_directionalLightShadowMapMatrixUniforms[index], Matrix4x4.Identity);
     }
 
     private void SetupActiveDirectionalLight(int index, DirectionalLight light)
     {
-        UniformVector3($"DirectionalLights[{index}].direction", light.Forward);
-        UniformVector3($"DirectionalLights[{index}].color", new Vector3(light.LightColor.R / 255f, light.LightColor.G / 255f, light.LightColor.B / 255f));
-        UniformFloat($"DirectionalLights[{index}].castShadow", light.CastShadow ? 1.0f : 0.0f);
+        UniformVector3(_directionalLightDirectionUniforms[index], light.Forward);
+        UniformVector3(_directionalLightColorUniforms[index], new Vector3(light.LightColor.R / 255f, light.LightColor.G / 255f, light.LightColor.B / 255f));
+        UniformFloat(_directionalLightCastShadowUniforms[index], light.CastShadow ? 1.0f : 0.0f);
 
         var rt = light.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
 
@@ -146,13 +234,13 @@ public class LightPass : RenderPass
             var shadowView = Matrix4x4.CreateLookAt(light.WorldTransform.Translation, light.WorldTransform.Translation + light.WorldTransform.ForwardVector(), light.WorldTransform.UpVector());
             var shadowProjection = Matrix4x4.CreateOrthographic(light.ShadowConfig.Width, light.ShadowConfig.Height, light.ShadowConfig.NearPlane, light.ShadowConfig.FarPlane);
 
-            UniformTexture($"DirectionalLightShadowMaps[{index}]", rt.DepthStencilTexture);
-            UniformMatrix4($"DirectionalLights[{index}].shadowMapMatrix", shadowView * shadowProjection);
+            UniformTexture(_directionalLightShadowMapUniforms[index], rt.DepthStencilTexture);
+            UniformMatrix4(_directionalLightShadowMapMatrixUniforms[index], shadowView * shadowProjection);
         }
         else
         {
-            UniformTexture($"DirectionalLightShadowMaps[{index}]", 0);
-            UniformMatrix4($"DirectionalLights[{index}].shadowMapMatrix", Matrix4x4.Identity);
+            UniformTexture(_directionalLightShadowMapUniforms[index], 0);
+            UniformMatrix4(_directionalLightShadowMapMatrixUniforms[index], Matrix4x4.Identity);
         }
     }
 
@@ -175,25 +263,25 @@ public class LightPass : RenderPass
 
     private void SetupInactivePointLight(int index)
     {
-        UniformVector3($"PointLights[{index}].color", Vector3.Zero);
-        UniformVector3($"PointLights[{index}].position", Vector3.Zero);
-        UniformFloat($"PointLights[{index}].radius", 0.0f);
-        UniformFloat($"PointLights[{index}].softRatio", 0.1f);
-        UniformTextureCubeMap($"PointLightShadowMaps[{index}]", 0);
+        UniformVector3(_pointLightColorUniforms[index], Vector3.Zero);
+        UniformVector3(_pointLightPositionUniforms[index], Vector3.Zero);
+        UniformFloat(_pointLightRadiusUniforms[index], 0.0f);
+        UniformFloat(_pointLightSoftRatioUniforms[index], 0.1f);
+        UniformTextureCubeMap(_pointLightShadowMapUniforms[index], 0);
 
         for (int j = 0; j < 6; j++)
         {
-            UniformMatrix4($"PointLights[{index}].shadowMapMatrices[{j}]", Matrix4x4.Identity);
+            UniformMatrix4(_pointLightShadowMapMatricesUniforms[index][j], Matrix4x4.Identity);
         }
     }
 
     private void SetupActivePointLight(int index, PointLight light, Span<Matrix4x4> shadowViews)
     {
-        UniformVector3($"PointLights[{index}].color", new Vector3(light.LightColor.R / 255f, light.LightColor.G / 255f, light.LightColor.B / 255f));
-        UniformVector3($"PointLights[{index}].position", light.WorldTransform.Translation);
-        UniformFloat($"PointLights[{index}].radius", light.AttenuationRadius);
-        UniformFloat($"PointLights[{index}].softRatio", light.SoftRatio);
-        UniformFloat($"PointLights[{index}].castShadow", light.CastShadow ? 1.0f : 0.0f);
+        UniformVector3(_pointLightColorUniforms[index], new Vector3(light.LightColor.R / 255f, light.LightColor.G / 255f, light.LightColor.B / 255f));
+        UniformVector3(_pointLightPositionUniforms[index], light.WorldTransform.Translation);
+        UniformFloat(_pointLightRadiusUniforms[index], light.AttenuationRadius);
+        UniformFloat(_pointLightSoftRatioUniforms[index], light.SoftRatio);
+        UniformFloat(_pointLightCastShadowUniforms[index], light.CastShadow ? 1.0f : 0.0f);
 
         var rt = light.GetPipelineGpuResource<CubeRenderTarget>("ShadowMapRenderTarget");
 
@@ -212,16 +300,16 @@ public class LightPass : RenderPass
 
             for (int j = 0; j < 6; j++)
             {
-                UniformMatrix4($"PointLights[{index}].shadowMapMatrices[{j}]", shadowViews[j] * shadowProjection);
+                UniformMatrix4(_pointLightShadowMapMatricesUniforms[index][j], shadowViews[j] * shadowProjection);
             }
-            UniformTextureCubeMap($"PointLightShadowMaps[{index}]", rt.DepthStencilTexture);
+            UniformTextureCubeMap(_pointLightShadowMapUniforms[index], rt.DepthStencilTexture);
         }
         else
         {
-            UniformTextureCubeMap($"PointLightShadowMaps[{index}]", 0);
+            UniformTextureCubeMap(_pointLightShadowMapUniforms[index], 0);
             for (int j = 0; j < 6; j++)
             {
-                UniformMatrix4($"PointLights[{index}].shadowMapMatrices[{j}]", Matrix4x4.Identity);
+                UniformMatrix4(_pointLightShadowMapMatricesUniforms[index][j], Matrix4x4.Identity);
             }
         }
     }
@@ -243,27 +331,27 @@ public class LightPass : RenderPass
 
     private void SetupInactiveSpotLight(int index)
     {
-        UniformVector3($"SpotLights[{index}].color", Vector3.Zero);
-        UniformVector3($"SpotLights[{index}].position", Vector3.Zero);
-        UniformVector3($"SpotLights[{index}].direction", Vector3.Zero);
-        UniformFloat($"SpotLights[{index}].inner_cone_cos", 0.0f);
-        UniformFloat($"SpotLights[{index}].outer_cone_cos", 0.0f);
-        UniformFloat($"SpotLights[{index}].radius", 0.0f);
-        UniformFloat($"SpotLights[{index}].softRatio", 0.1f);
-        UniformMatrix4($"SpotLights[{index}].shadowMapMatrix", Matrix4x4.Identity);
-        UniformTexture($"SpotLightShadowMaps[{index}]", 0);
+        UniformVector3(_spotLightColorUniforms[index], Vector3.Zero);
+        UniformVector3(_spotLightPositionUniforms[index], Vector3.Zero);
+        UniformVector3(_spotLightDirectionUniforms[index], Vector3.Zero);
+        UniformFloat(_spotLightInnerConeCosUniforms[index], 0.0f);
+        UniformFloat(_spotLightOuterConeCosUniforms[index], 0.0f);
+        UniformFloat(_spotLightRadiusUniforms[index], 0.0f);
+        UniformFloat(_spotLightSoftRatioUniforms[index], 0.1f);
+        UniformMatrix4(_spotLightShadowMapMatrixUniforms[index], Matrix4x4.Identity);
+        UniformTexture(_spotLightShadowMapUniforms[index], 0);
     }
 
     private void SetupActiveSpotLight(int index, SpotLight light)
     {
-        UniformVector3($"SpotLights[{index}].color", new Vector3(light.LightColor.R / 255f, light.LightColor.G / 255f, light.LightColor.B / 255f));
-        UniformVector3($"SpotLights[{index}].position", light.WorldTransform.Translation);
-        UniformVector3($"SpotLights[{index}].direction", light.Forward);
-        UniformFloat($"SpotLights[{index}].inner_cone_cos", MathF.Cos(light.InnerConeAngleDegree.DegreeToRadians()));
-        UniformFloat($"SpotLights[{index}].outer_cone_cos", MathF.Cos(light.OuterAngleDegree.DegreeToRadians()));
-        UniformFloat($"SpotLights[{index}].radius", light.AttenuationRadius);
-        UniformFloat($"SpotLights[{index}].softRatio", light.SoftRatio);
-        UniformFloat($"SpotLights[{index}].castShadow", light.CastShadow ? 1.0f : 0.0f);
+        UniformVector3(_spotLightColorUniforms[index], new Vector3(light.LightColor.R / 255f, light.LightColor.G / 255f, light.LightColor.B / 255f));
+        UniformVector3(_spotLightPositionUniforms[index], light.WorldTransform.Translation);
+        UniformVector3(_spotLightDirectionUniforms[index], light.Forward);
+        UniformFloat(_spotLightInnerConeCosUniforms[index], MathF.Cos(light.InnerConeAngleDegree.DegreeToRadians()));
+        UniformFloat(_spotLightOuterConeCosUniforms[index], MathF.Cos(light.OuterAngleDegree.DegreeToRadians()));
+        UniformFloat(_spotLightRadiusUniforms[index], light.AttenuationRadius);
+        UniformFloat(_spotLightSoftRatioUniforms[index], light.SoftRatio);
+        UniformFloat(_spotLightCastShadowUniforms[index], light.CastShadow ? 1.0f : 0.0f);
 
         var rt = light.GetPipelineGpuResource<RenderTarget>("ShadowMapRenderTarget");
 
@@ -273,15 +361,16 @@ public class LightPass : RenderPass
             var shadowView = Matrix4x4.CreateLookAt(position, position + light.WorldTransform.ForwardVector(), light.WorldTransform.UpVector());
             var shadowProjection = Matrix4x4.CreatePerspectiveFieldOfView(light.OuterAngleDegree.DegreeToRadians(), rt.Width / (float)rt.Height, light.ShadowConfig.NearPlane, light.ShadowConfig.FarPlane);
 
-            UniformTexture($"SpotLightShadowMaps[{index}]", rt.DepthStencilTexture);
-            UniformMatrix4($"SpotLights[{index}].shadowMapMatrix", shadowView * shadowProjection);
+            UniformTexture(_spotLightShadowMapUniforms[index], rt.DepthStencilTexture);
+            UniformMatrix4(_spotLightShadowMapMatrixUniforms[index], shadowView * shadowProjection);
         }
         else
         {
-            UniformTexture($"SpotLightShadowMaps[{index}]", 0);
-            UniformMatrix4($"SpotLights[{index}].shadowMapMatrix", Matrix4x4.Identity);
+            UniformTexture(_spotLightShadowMapUniforms[index], 0);
+            UniformMatrix4(_spotLightShadowMapMatrixUniforms[index], Matrix4x4.Identity);
         }
     }
+
     public override void AfterRender(Camera camera)
     {
     }

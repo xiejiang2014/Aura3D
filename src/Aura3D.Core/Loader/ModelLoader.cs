@@ -646,15 +646,24 @@ public static class ModelLoader
         if (skeleton == null)
             return;
 
+        // 预建 GLTF 骨骼名称到 Skeleton 索引的映射，避免重复 LINQ 查询
+        var skinJointToSkeletonIndex = new Dictionary<string, int>(node.Skin!.Joints.Count);
+        foreach (var joint in node.Skin.Joints)
+        {
+            skinJointToSkeletonIndex[joint.Name] = skeleton.GetBoneIndex(joint.Name);
+        }
+
         geometry.SetVertexAttribute(attribute, 4, joints.SelectMany(v =>
         {
             if (node.Skin == null)
                 return new float[] { v.X, v.Y, v.Z, v.W };
 
-            var x = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.X].Name).First().Index;
-            var y = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Y].Name).First().Index;
-            var z = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Z].Name).First().Index;
-            var w = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.W].Name).First().Index;
+            // 使用预建的映射，O(1) 查找
+            skinJointToSkeletonIndex.TryGetValue(node.Skin.Joints[(int)v.X].Name, out var x);
+            skinJointToSkeletonIndex.TryGetValue(node.Skin.Joints[(int)v.Y].Name, out var y);
+            skinJointToSkeletonIndex.TryGetValue(node.Skin.Joints[(int)v.Z].Name, out var z);
+            skinJointToSkeletonIndex.TryGetValue(node.Skin.Joints[(int)v.W].Name, out var w);
+
             return new float[] { x, y, z, w };
         }).ToList());
     }

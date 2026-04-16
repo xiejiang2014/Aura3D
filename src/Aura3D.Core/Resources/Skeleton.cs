@@ -21,6 +21,42 @@ public class Skeleton
     /// 根骨骼
     /// </summary>
     public Bone Root = new Bone();
+
+    /// <summary>
+    /// 骨骼名称到索引的映射缓存，用于快速查找
+    /// </summary>
+    private Dictionary<string, int>? _boneIndexCache;
+
+    /// <summary>
+    /// 获取骨骼名称到索引的映射。首次访问时构建缓存。
+    /// </summary>
+    /// <returns>骨骼名称到索引的字典</returns>
+    public Dictionary<string, int> GetBoneIndexMap()
+    {
+        if (_boneIndexCache == null)
+        {
+            _boneIndexCache = new Dictionary<string, int>(Bones.Count);
+            foreach (var bone in Bones)
+            {
+                _boneIndexCache[bone.Name] = bone.Index;
+            }
+        }
+        return _boneIndexCache;
+    }
+
+    /// <summary>
+    /// 根据骨骼名称获取索引
+    /// </summary>
+    /// <param name="boneName">骨骼名称</param>
+    /// <returns>骨骼索引，如果未找到则返回 -1</returns>
+    public int GetBoneIndex(string boneName)
+    {
+        if (GetBoneIndexMap().TryGetValue(boneName, out var index))
+        {
+            return index;
+        }
+        return -1;
+    }
 }
 
 /// <summary>
