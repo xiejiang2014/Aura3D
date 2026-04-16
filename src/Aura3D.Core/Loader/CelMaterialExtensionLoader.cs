@@ -62,23 +62,23 @@ public class CelMaterialExtensionLoader : MaterialExtensionLoaderBase
                 logicMaterial.Channels.Add(channel);
                 ++i;
             }
-            logicMaterial.SetParameterValue<float>("_RampIndex0", celExt.rampIndex0);
-            logicMaterial.SetParameterValue<float>("_RampIndex1", celExt.rampIndex1);
-            logicMaterial.SetParameterValue<float>("_RampIndex2", celExt.rampIndex2);
-            logicMaterial.SetParameterValue<float>("_RampIndex3", celExt.rampIndex3);
-            logicMaterial.SetParameterValue<float>("_RampIndex4", celExt.rampIndex4);
+            logicMaterial.SetParameterValue<float>("_RampIndex0", celExt.RampIndex0);
+            logicMaterial.SetParameterValue<float>("_RampIndex1", celExt.RampIndex1);
+            logicMaterial.SetParameterValue<float>("_RampIndex2", celExt.RampIndex2);
+            logicMaterial.SetParameterValue<float>("_RampIndex3", celExt.RampIndex3);
+            logicMaterial.SetParameterValue<float>("_RampIndex4", celExt.RampIndex4);
 
-            logicMaterial.SetParameterValue<float>("_BrightFac", celExt.brightFac);
-            logicMaterial.SetParameterValue<float>("_GreyFac", celExt.greyFac);
-            logicMaterial.SetParameterValue<float>("_DarkFac", celExt.darkFac);
-            logicMaterial.SetParameterValue<float>("_BrightAreaShadowFac", celExt.brightAreaShadowFac);
+            logicMaterial.SetParameterValue<float>("_BrightFac", celExt.BrightFac);
+            logicMaterial.SetParameterValue<float>("_GreyFac", celExt.GreyFac);
+            logicMaterial.SetParameterValue<float>("_DarkFac", celExt.DarkFac);
+            logicMaterial.SetParameterValue<float>("_BrightAreaShadowFac", celExt.BrightAreaShadowFac);
 
-            logicMaterial.SetParameterValue<Vector4>("_BrightAreaShadowFac", celExt.lightAreaColorTint);
-            logicMaterial.SetParameterValue<Vector4>("_DarkShadowColor", celExt.darkShadowColor);
-            logicMaterial.SetParameterValue<Vector4>("_CoolDarkShadowColor", celExt.coolDarkShadowColor);
+            logicMaterial.SetParameterValue<Vector4>("_BrightAreaShadowFac", celExt.LightAreaColorTint);
+            logicMaterial.SetParameterValue<Vector4>("_DarkShadowColor", celExt.DarkShadowColor);
+            logicMaterial.SetParameterValue<Vector4>("_CoolDarkShadowColor", celExt.CoolDarkShadowColor);
 
-            logicMaterial.SetParameterValue<float>("_FaceShadowOffset", celExt.faceShadowOffset);
-            logicMaterial.SetParameterValue<float>("_FaceShadowTransitionSoftness", celExt.faceShadowTransitionSoftness);
+            logicMaterial.SetParameterValue<float>("_FaceShadowOffset", celExt.FaceShadowOffset);
+            logicMaterial.SetParameterValue<float>("_FaceShadowTransitionSoftness", celExt.FaceShadowTransitionSoftness);
 
             break;
         }
@@ -111,35 +111,47 @@ public class Aura3DCelExtraProperties : ExtraProperties
 
     #region data
 
+    /// <summary>
+    /// ILM 纹理索引。
+    /// </summary>
     public int ILM;
 
+    /// <summary>
+    /// SDF 纹理索引。
+    /// </summary>
     public int SDF;
 
+    /// <summary>
+    /// 阴影渐变纹理索引。
+    /// </summary>
     public int ShadowRamp;
 
+    /// <summary>
+    /// 高光渐变纹理索引。
+    /// </summary>
     public int SpecularRamp;
 
     // Ramp Index：
-    public float rampIndex0;
-    public float rampIndex1;
-    public float rampIndex2;
-    public float rampIndex3;
-    public float rampIndex4;
+    public float RampIndex0;
+    public float RampIndex1;
+    public float RampIndex2;
+    public float RampIndex3;
+    public float RampIndex4;
 
     // Light Factor
-    public float brightFac;
-    public float greyFac;
-    public float darkFac;
-    public float brightAreaShadowFac;
+    public float BrightFac;
+    public float GreyFac;
+    public float DarkFac;
+    public float BrightAreaShadowFac;
 
     // Color Tint
-    public Vector4 lightAreaColorTint;
-    public Vector4 darkShadowColor;
-    public Vector4 coolDarkShadowColor;
+    public Vector4 LightAreaColorTint;
+    public Vector4 DarkShadowColor;
+    public Vector4 CoolDarkShadowColor;
 
     // SDF Offset
-    public float faceShadowOffset;
-    public float faceShadowTransitionSoftness;
+    public float FaceShadowOffset;
+    public float FaceShadowTransitionSoftness;
 
     #endregion
 
@@ -197,23 +209,23 @@ public class Aura3DCelExtraProperties : ExtraProperties
         SerializeProperty(writer, "ShadowRamp", ShadowRamp);
         SerializeProperty(writer, "SpecularRamp", SpecularRamp);
 
-        SerializeProperty(writer, "_RampIndex0", rampIndex0);
-        SerializeProperty(writer, "_RampIndex1", rampIndex1);
-        SerializeProperty(writer, "_RampIndex2", rampIndex2);
-        SerializeProperty(writer, "_RampIndex3", rampIndex3);
-        SerializeProperty(writer, "_RampIndex4", rampIndex4);
+        SerializeProperty(writer, "_RampIndex0", RampIndex0);
+        SerializeProperty(writer, "_RampIndex1", RampIndex1);
+        SerializeProperty(writer, "_RampIndex2", RampIndex2);
+        SerializeProperty(writer, "_RampIndex3", RampIndex3);
+        SerializeProperty(writer, "_RampIndex4", RampIndex4);
 
-        SerializeProperty(writer, "_BrightFac", brightFac);
-        SerializeProperty(writer, "_GreyFac", greyFac);
-        SerializeProperty(writer, "_DarkFac", darkFac);
-        SerializeProperty(writer, "_BrightAreaShadowFac", brightAreaShadowFac);
+        SerializeProperty(writer, "_BrightFac", BrightFac);
+        SerializeProperty(writer, "_GreyFac", GreyFac);
+        SerializeProperty(writer, "_DarkFac", DarkFac);
+        SerializeProperty(writer, "_BrightAreaShadowFac", BrightAreaShadowFac);
 
-        SerializeProperty(writer, "_LightAreaColorTint", lightAreaColorTint);
-        SerializeProperty(writer, "_DarkShadowColor", darkShadowColor);
-        SerializeProperty(writer, "_CoolDarkShadowColor", coolDarkShadowColor);
+        SerializeProperty(writer, "_LightAreaColorTint", LightAreaColorTint);
+        SerializeProperty(writer, "_DarkShadowColor", DarkShadowColor);
+        SerializeProperty(writer, "_CoolDarkShadowColor", CoolDarkShadowColor);
 
-        SerializeProperty(writer, "_FaceShadowOffset", faceShadowOffset);
-        SerializeProperty(writer, "_FaceShadowTransitionSoftness", faceShadowTransitionSoftness);
+        SerializeProperty(writer, "_FaceShadowOffset", FaceShadowOffset);
+        SerializeProperty(writer, "_FaceShadowTransitionSoftness", FaceShadowTransitionSoftness);
     }
 
     protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
@@ -225,23 +237,23 @@ public class Aura3DCelExtraProperties : ExtraProperties
             case "ShadowRamp": DeserializePropertyValue<Aura3DCelExtraProperties, int>(ref reader, this, out ShadowRamp); break;
             case "SpecularRamp": DeserializePropertyValue<Aura3DCelExtraProperties, int>(ref reader, this, out SpecularRamp); break;
 
-            case "_RampIndex0": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out rampIndex0); break;
-            case "_RampIndex1": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out rampIndex1); break;
-            case "_RampIndex2": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out rampIndex2); break;
-            case "_RampIndex3": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out rampIndex3); break;
-            case "_RampIndex4": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out rampIndex4); break;
+            case "_RampIndex0": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out RampIndex0); break;
+            case "_RampIndex1": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out RampIndex1); break;
+            case "_RampIndex2": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out RampIndex2); break;
+            case "_RampIndex3": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out RampIndex3); break;
+            case "_RampIndex4": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out RampIndex4); break;
 
-            case "_BrightFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out brightFac); break;
-            case "_GreyFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out greyFac); break;
-            case "_DarkFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out darkFac); break;
-            case "_BrightAreaShadowFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out brightAreaShadowFac); break;
+            case "_BrightFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out BrightFac); break;
+            case "_GreyFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out GreyFac); break;
+            case "_DarkFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out DarkFac); break;
+            case "_BrightAreaShadowFac": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out BrightAreaShadowFac); break;
 
-            case "_LightAreaColorTint": DeserializePropertyValue<Aura3DCelExtraProperties, Vector4>(ref reader, this, out lightAreaColorTint); break;
-            case "_DarkShadowColor": DeserializePropertyValue<Aura3DCelExtraProperties, Vector4>(ref reader, this, out darkShadowColor); break;
-            case "_CoolDarkShadowColor": DeserializePropertyValue<Aura3DCelExtraProperties, Vector4>(ref reader, this, out coolDarkShadowColor); break;
+            case "_LightAreaColorTint": DeserializePropertyValue<Aura3DCelExtraProperties, Vector4>(ref reader, this, out LightAreaColorTint); break;
+            case "_DarkShadowColor": DeserializePropertyValue<Aura3DCelExtraProperties, Vector4>(ref reader, this, out DarkShadowColor); break;
+            case "_CoolDarkShadowColor": DeserializePropertyValue<Aura3DCelExtraProperties, Vector4>(ref reader, this, out CoolDarkShadowColor); break;
 
-            case "_FaceShadowOffset": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out faceShadowOffset); break;
-            case "_FaceShadowTransitionSoftness": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out faceShadowTransitionSoftness); break;
+            case "_FaceShadowOffset": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out FaceShadowOffset); break;
+            case "_FaceShadowTransitionSoftness": DeserializePropertyValue<Aura3DCelExtraProperties, float>(ref reader, this, out FaceShadowTransitionSoftness); break;
 
             default: base.DeserializeProperty(jsonPropertyName, ref reader); break;
         }

@@ -219,7 +219,10 @@ public class Mesh : Node, IOctreeObject
 
     private Dictionary<int, BoundingBox> SkeletalMeshBoundingBox = new();
 
-    private List<BoundingBox> SkeletalMeshBoundingBox2 = new();
+    /// <summary>
+    /// 动画播放过程中的动态边界框缓存列表。
+    /// </summary>
+    private List<BoundingBox> _animatedBoundingBoxes = new();
 
     /// <summary>
     /// 骨骼权重阈值，用于判断顶点是否受某个骨骼影响。默认值为 0.3。
@@ -334,17 +337,17 @@ public class Mesh : Node, IOctreeObject
         if (AnimationSampler == null)
             return;
 
-        SkeletalMeshBoundingBox2.Clear();
+        _animatedBoundingBoxes.Clear();
 
         foreach (var (index, boundingBox) in SkeletalMeshBoundingBox)
         {
             if (index < AnimationSampler.BonesTransform.Count)
             {
-                SkeletalMeshBoundingBox2.Add(boundingBox.Transform(Skeleton.Bones[index].InverseWorldMatrix * AnimationSampler.BonesTransform[index]));
+                _animatedBoundingBoxes.Add(boundingBox.Transform(Skeleton.Bones[index].InverseWorldMatrix * AnimationSampler.BonesTransform[index]));
             }
         }
 
-        localBoundingBox = BoundingBox.CreateMerged(SkeletalMeshBoundingBox2);
+        localBoundingBox = BoundingBox.CreateMerged(_animatedBoundingBoxes);
 
         boundingBox = null;
     }

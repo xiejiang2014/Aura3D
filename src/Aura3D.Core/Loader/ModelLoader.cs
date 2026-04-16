@@ -222,21 +222,32 @@ public static class ModelLoader
     }
     private static Model processModelRoot(ModelRoot modelRoot)
     {
-        Model? model = null;
-
         var skeleton = processSkeleton(modelRoot);
+        var model = new Model
+        {
+            Skeleton = skeleton,
+            Name = modelRoot.DefaultScene.Name
+        };
 
-        model = new Model();
+        var textureMap = LoadTextures(modelRoot);
+        var materialMap = LoadMaterials(modelRoot, textureMap);
 
-        model.Skeleton = skeleton;
+        foreach (var node in modelRoot.DefaultScene.VisualChildren)
+        {
+            processNode(node, model, materialMap, skeleton);
+        }
 
-        model.Name = modelRoot.DefaultScene.Name;
+        foreach (var mesh in model.Meshes)
+        {
+            mesh.Model = model;
+        }
 
-        Dictionary<SharpGLTF.Schema2.Texture, Texture> textureMap = new();
+        return model;
+    }
 
-        Dictionary<SharpGLTF.Schema2.Material, Material> materialMap = new();
-
-        Dictionary<MaterialChannel, Channel> channelMap = new();
+    private static Dictionary<SharpGLTF.Schema2.Texture, Texture> LoadTextures(ModelRoot modelRoot)
+    {
+        var textureMap = new Dictionary<SharpGLTF.Schema2.Texture, Texture>();
 
         foreach (var texture in modelRoot.LogicalTextures)
         {
@@ -251,158 +262,198 @@ public static class ModelLoader
             }
         }
 
+        return textureMap;
+    }
+
+    private static Dictionary<SharpGLTF.Schema2.Material, Material> LoadMaterials(
+        ModelRoot modelRoot,
+        Dictionary<SharpGLTF.Schema2.Texture, Texture> textureMap)
+    {
+        var materialMap = new Dictionary<SharpGLTF.Schema2.Material, Material>();
+        var channelMap = new Dictionary<MaterialChannel, Channel>();
 
         foreach (var material in modelRoot.LogicalMaterials)
         {
             if (materialMap.ContainsKey(material))
                 continue;
-            var mat = new Material();
 
-            mat.AlphaCutoff = material.AlphaCutoff;
-            mat.DoubleSided = material.DoubleSided;
-            mat.BlendMode = material.Alpha switch
+            var mat = CreateMaterialFromGltf(material);
+            LoadMaterialExtensions(modelRoot, material, mat);
+            LoadMaterialChannels(material, mat, textureMap, channelMap);
+
+            materialMap[material] = mat;
+        }
+
+        return materialMap;
+    }
+
+    private static Material CreateMaterialFromGltf(SharpGLTF.Schema2.Material material)
+    {
+        return new Material
+        {
+            AlphaCutoff = material.AlphaCutoff,
+            DoubleSided = material.DoubleSided,
+            BlendMode = material.Alpha switch
             {
                 AlphaMode.OPAQUE => BlendMode.Opaque,
                 AlphaMode.BLEND => BlendMode.Translucent,
                 AlphaMode.MASK => BlendMode.Masked,
                 _ => BlendMode.Opaque,
-            };
+            }
+        };
+    }
 
-            //foreach(var func in _materialExtensions)
-            //{
-            //    var tempList = func(modelRoot, material);
-            //    mat.Channels.AddRange(tempList);
-            //}
+    private static void LoadMaterialExtensions(
+        ModelRoot modelRoot,
+        SharpGLTF.Schema2.Material material,
+        Material mat)
+    {
+        foreach (var ext in material.Extensions)
+        {
+            _materialExtensionTypes.TryGetValue(ext.GetType(), out Type extType);
+            if (extType == null)
+                continue;
 
-            foreach(var ext in material.Extensions)
+            MaterialExtensionLoaderBase materialExtension = (MaterialExtensionLoaderBase)Activator.CreateInstance(extType);
+            if (materialExtension == null)
+                continue;
+
+            materialExtension.LoadMaterialExtension(modelRoot, material, mat);
+        }
+    }
+
+    private static void LoadMaterialChannels(
+        SharpGLTF.Schema2.Material material,
+        Material mat,
+        Dictionary<SharpGLTF.Schema2.Texture, Texture> textureMap,
+        Dictionary<MaterialChannel, Channel> channelMap)
+    {
+        foreach (var gltfChannel in material.Channels)
+        {
+            if (channelMap.TryGetValue(gltfChannel, out var existingChannel))
             {
-                var type = ext.GetType();
-
-                _materialExtensionTypes.TryGetValue(ext.GetType(), out Type extType);
-                if (extType == null)
-                    continue;
-                MaterialExtensionLoaderBase materialExtension = (MaterialExtensionLoaderBase)Activator.CreateInstance(extType);
-                if(materialExtension == null)
-                    continue;
-                materialExtension.LoadMaterialExtension(modelRoot, material, mat);
+                mat.Channels.Add(existingChannel);
+                continue;
             }
 
-            foreach (var gltfChannel in material.Channels)
+            var channel = CreateChannelFromGltf(gltfChannel, textureMap);
+            mat.Channels.Add(channel);
+            channelMap[gltfChannel] = channel;
+        }
+    }
+
+    private static Channel CreateChannelFromGltf(
+        MaterialChannel gltfChannel,
+        Dictionary<SharpGLTF.Schema2.Texture, Texture> textureMap)
+    {
+        var channel = new Channel
+        {
+            Name = gltfChannel.Key
+        };
+
+        if (gltfChannel.Texture != null && textureMap.TryGetValue(gltfChannel.Texture, out var texture))
+        {
+            channel.Texture = texture;
+            ConfigureTextureForChannel(channel, texture, gltfChannel);
+        }
+        else
+        {
+            TryCreateFallbackTexture(channel, gltfChannel);
+        }
+
+        return channel;
+    }
+
+    private static void ConfigureTextureForChannel(
+        Channel channel,
+        Texture texture,
+        MaterialChannel gltfChannel)
+    {
+        if (channel.Name == "BaseColor")
+        {
+            texture.SetIsGammaSpace(true);
+        }
+
+        if (channel.Name == "MetallicRoughness")
+        {
+            ApplyMetallicRoughnessFactors(texture, gltfChannel);
+        }
+
+        if (gltfChannel.TextureSampler != null)
+        {
+            ConfigureTextureSampler(texture, gltfChannel.TextureSampler);
+        }
+    }
+
+    private static void ApplyMetallicRoughnessFactors(Texture texture, MaterialChannel gltfChannel)
+    {
+        var metallicFactor = gltfChannel.GetFactor("MetallicFactor");
+        var roughnessFactor = gltfChannel.GetFactor("RoughnessFactor");
+
+        int step = texture.ColorFormat == ColorFormat.RGB ? 3 : 4;
+        for (int i = 0; i < texture.Width * texture.Height * step; i += step)
+        {
+            if (texture.IsHdr == true)
             {
-                if (channelMap.TryGetValue(gltfChannel, out var channel))
-                {
-                    mat.Channels.Add(channel);
-                    continue;
-                }
-                channel = new Channel();
-                channel.Name = gltfChannel.Key;
-                if (gltfChannel.Texture != null && textureMap.ContainsKey(gltfChannel.Texture))
-                {
-                    channel.Texture = textureMap[gltfChannel.Texture];
-                    if (channel.Name == "BaseColor")
-                    {
-                        var texture = (Texture)channel.Texture;
-
-                        texture.SetIsGammaSpace(true);
-                    }
-
-                    if (channel.Name == "MetallicRoughness")
-                    {
-
-                        var texture = (Texture)channel.Texture;
-                        var metallicFactor = gltfChannel.GetFactor("MetallicFactor");
-                        var roughnessFactor = gltfChannel.GetFactor("RoughnessFactor");
-
-                        int step = texture.ColorFormat == ColorFormat.RGB ? 3 : 4;
-                        for(int i = 0; i < texture.Width * texture.Height * step; i += step)
-                        {
-                            if (texture.IsHdr == true)
-                            {
-                                var r = texture.HdrData[i + 2];
-                                texture.HdrData[i + 2] = r * metallicFactor;
-                                var g = texture.HdrData[i + 1];
-                                texture.HdrData[i + 1] = g * roughnessFactor;
-                            }
-                            else
-                            {
-                                var r = texture.LdrData[i + 2];
-                                texture.LdrData[i + 2] = (byte)(r * metallicFactor);
-
-                                var g = texture.LdrData[i + 1];
-                                texture.LdrData[i + 1] = (byte)(g * roughnessFactor);
-                            }
-                        }
-                    }
-
-                    if (gltfChannel.TextureSampler != null)
-                    {
-                        if (channel.Texture != null && channel.Texture is Texture texture)
-                        {
-                            texture.SetWarpS(gltfChannel.TextureSampler.WrapS switch
-                            {
-                                SharpGLTF.Schema2.TextureWrapMode.REPEAT => TextureWrapMode.Repeat,
-                                SharpGLTF.Schema2.TextureWrapMode.CLAMP_TO_EDGE => TextureWrapMode.ClampToEdge,
-                                SharpGLTF.Schema2.TextureWrapMode.MIRRORED_REPEAT => TextureWrapMode.MirroredRepeat,
-                                _ => TextureWrapMode.Repeat,
-                            });
-
-                            texture.SetWarpT(gltfChannel.TextureSampler.WrapT switch
-                            {
-                                SharpGLTF.Schema2.TextureWrapMode.REPEAT => TextureWrapMode.Repeat,
-                                SharpGLTF.Schema2.TextureWrapMode.CLAMP_TO_EDGE => TextureWrapMode.ClampToEdge,
-                                SharpGLTF.Schema2.TextureWrapMode.MIRRORED_REPEAT => TextureWrapMode.MirroredRepeat,
-                                _ => TextureWrapMode.Repeat,
-                            });
-
-                            texture.SetMinFilter(gltfChannel.TextureSampler.MinFilter switch
-                            {
-                                TextureMipMapFilter.NEAREST => TextureFilterMode.Nearest,
-                                TextureMipMapFilter.LINEAR => TextureFilterMode.Linear,
-                                _ => TextureFilterMode.Linear,
-                            });
-
-
-                            texture.SetMagFilter(gltfChannel.TextureSampler.MagFilter switch
-                            {
-                                TextureInterpolationFilter.NEAREST => TextureFilterMode.Nearest,
-                                TextureInterpolationFilter.LINEAR => TextureFilterMode.Linear,
-                                _ => TextureFilterMode.Linear,
-                            });
-                        }
-
-                    }
-                }
-                else
-                {
-
-                    try
-                    {
-                        channel.Texture = Texture.CreateFromColor(gltfChannel.Color.ToColor());
-                    }
-                    catch
-                    {
-                    }
-                }
-                mat.Channels.Add(channel);
-                channelMap[gltfChannel] = channel;
+                var r = texture.HdrData[i + 2];
+                texture.HdrData[i + 2] = r * metallicFactor;
+                var g = texture.HdrData[i + 1];
+                texture.HdrData[i + 1] = g * roughnessFactor;
             }
+            else
+            {
+                var r = texture.LdrData[i + 2];
+                texture.LdrData[i + 2] = (byte)(r * metallicFactor);
 
-            materialMap[material] = mat;
-
+                var g = texture.LdrData[i + 1];
+                texture.LdrData[i + 1] = (byte)(g * roughnessFactor);
+            }
         }
+    }
 
-        foreach (var node in modelRoot.DefaultScene.VisualChildren)
+    private static void ConfigureTextureSampler(Texture texture, TextureSampler sampler)
+    {
+        texture.SetWarpS(sampler.WrapS switch
         {
-            processNode(node, model, materialMap, skeleton);
-        }
+            SharpGLTF.Schema2.TextureWrapMode.REPEAT => TextureWrapMode.Repeat,
+            SharpGLTF.Schema2.TextureWrapMode.CLAMP_TO_EDGE => TextureWrapMode.ClampToEdge,
+            SharpGLTF.Schema2.TextureWrapMode.MIRRORED_REPEAT => TextureWrapMode.MirroredRepeat,
+            _ => TextureWrapMode.Repeat,
+        });
 
-
-        foreach(var mesh in model.Meshes)
+        texture.SetWarpT(sampler.WrapT switch
         {
-            mesh.Model = model;
-        }
+            SharpGLTF.Schema2.TextureWrapMode.REPEAT => TextureWrapMode.Repeat,
+            SharpGLTF.Schema2.TextureWrapMode.CLAMP_TO_EDGE => TextureWrapMode.ClampToEdge,
+            SharpGLTF.Schema2.TextureWrapMode.MIRRORED_REPEAT => TextureWrapMode.MirroredRepeat,
+            _ => TextureWrapMode.Repeat,
+        });
 
-        return model;
+        texture.SetMinFilter(sampler.MinFilter switch
+        {
+            TextureMipMapFilter.NEAREST => TextureFilterMode.Nearest,
+            TextureMipMapFilter.LINEAR => TextureFilterMode.Linear,
+            _ => TextureFilterMode.Linear,
+        });
+
+        texture.SetMagFilter(sampler.MagFilter switch
+        {
+            TextureInterpolationFilter.NEAREST => TextureFilterMode.Nearest,
+            TextureInterpolationFilter.LINEAR => TextureFilterMode.Linear,
+            _ => TextureFilterMode.Linear,
+        });
+    }
+
+    private static void TryCreateFallbackTexture(Channel channel, MaterialChannel gltfChannel)
+    {
+        try
+        {
+            channel.Texture = Texture.CreateFromColor(gltfChannel.Color.ToColor());
+        }
+        catch
+        {
+            // 忽略颜色创建失败的情况
+        }
     }
 
 
@@ -485,112 +536,14 @@ public static class ModelLoader
     }
     private static void processNode(SharpGLTF.Schema2.Node node, Node parent, Dictionary<SharpGLTF.Schema2.Material, Material> materialMap, Skeleton? skeleton)
     {
-        Node? currentNode = new Node();
-
-        currentNode.Name = node.Name;
-
-        currentNode.LocalTransform = node.LocalMatrix;
-
+        var currentNode = CreateNodeFromGltf(node);
         parent.AddChild(currentNode, AttachToParentRule.KeepLocal);
-
 
         if (node.Mesh != null)
         {
             foreach (var primitive in node.Mesh.Primitives)
             {
-                Mesh? mesh = null;
-
-                mesh = new Mesh();
-
-                mesh.LocalTransform = Matrix4x4.Identity;
-
-                currentNode.AddChild(mesh, AttachToParentRule.KeepLocal);
-
-                mesh.Name = node.Name;
-
-                var geometry = new Geometry();
-
-                foreach (var (name, accessor) in primitive.VertexAccessors)
-                {
-                    switch (name)
-                    {
-                        case "POSITION":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.Position, 3, primitive.GetVertexColumns().Positions.SelectMany(v => new float[] { v.X, v.Y, v.Z }).ToList());
-                            break;
-                        case "TEXCOORD_0":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_0, 2, primitive.GetVertexColumns().TexCoords0.SelectMany(v => new float[] { v.X, v.Y }).ToList());
-                            break;
-                        case "TEXCOORD_1":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_1, 2, primitive.GetVertexColumns().TexCoords1.SelectMany(v => new float[] { v.X, v.Y }).ToList());
-                            break;
-                        case "TEXCOORD_2":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_2, 2, primitive.GetVertexColumns().TexCoords2.SelectMany(v => new float[] { v.X, v.Y }).ToList());
-                            break;
-                        case "TEXCOORD_3":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_0, 2, primitive.GetVertexColumns().TexCoords3.SelectMany(v => new float[] { v.X, v.Y }).ToList());
-                            break;
-                        case "NORMAL":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.Normal, 3, primitive.GetVertexColumns().Normals.SelectMany(v => new float[] { v.X, v.Y, v.Z }).ToList());
-                            break;
-                        case "JOINTS_0":
-                            if (skeleton == null)
-                                break;
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.Joints_0, 4, primitive.GetVertexColumns().Joints0.SelectMany(v =>
-                            {
-                                if (node.Skin == null)
-                                    return new float[] { v.X, v.Y, v.Z, v.W };
-                                var x = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.X].Name).First().Index;
-                                var y = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Y].Name).First().Index;
-                                var z = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Z].Name).First().Index;
-                                var w = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.W].Name).First().Index;
-                                return new float[] { x, y, z, w };
-                            }).ToList());
-                            break;
-                        case "JOINTS_1":
-                            if (skeleton == null)
-                                break;
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.Joints_1, 4, primitive.GetVertexColumns().Joints1.SelectMany(v =>
-                            {
-                                if (node.Skin == null)
-                                    return new float[] { v.X, v.Y, v.Z, v.W };
-                                var x = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.X].Name).First().Index;
-                                var y = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Y].Name).First().Index;
-                                var z = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Z].Name).First().Index;
-                                var w = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.W].Name).First().Index;
-                                return new float[] { x, y, z, w };
-                            }).ToList());
-                            break;
-                        case "WEIGHTS_0":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.Weights_0, 4, primitive.GetVertexColumns().Weights0.SelectMany(v => new float[] { v.X, v.Y, v.Z, v.W }).ToList());
-                            break;
-                        case "WEIGHTS_1":
-                            geometry.SetVertexAttribute(BuildInVertexAttribute.Weights_1, 4, primitive.GetVertexColumns().Weights1.SelectMany(v => new float[] { v.X, v.Y, v.Z, v.W }).ToList());
-                            break;
-                    }
-                }
-
-                geometry.SetIndices(primitive.GetIndices().ToList());
-
-                var normals = geometry.GetAttributeData(BuildInVertexAttribute.Normal);
-                var uvs = geometry.GetAttributeData(BuildInVertexAttribute.TexCoord_0);
-                if (normals != null && uvs != null)
-                {
-                    ModelHelper.CalcVerticsTbn(geometry.Indices, normals, uvs, out var tangents, out var bitangents);
-                    geometry.SetVertexAttribute(BuildInVertexAttribute.Tangent, 3, tangents);
-                    geometry.SetVertexAttribute(BuildInVertexAttribute.Bitangent, 3, bitangents);
-                }
-
-                mesh.Geometry = geometry;
-
-                if (primitive.Material != null)
-                {
-                    materialMap.TryGetValue(primitive.Material, out var material);
-                    mesh.Material = material;
-                }
-                else
-                {
-
-                }
+                ProcessMeshPrimitive(primitive, currentNode, node, materialMap, skeleton);
             }
         }
 
@@ -598,7 +551,125 @@ public static class ModelLoader
         {
             processNode(child, currentNode, materialMap, skeleton);
         }
+    }
 
+    private static Node CreateNodeFromGltf(SharpGLTF.Schema2.Node node)
+    {
+        return new Node
+        {
+            Name = node.Name,
+            LocalTransform = node.LocalMatrix
+        };
+    }
+
+    private static void ProcessMeshPrimitive(
+        MeshPrimitive primitive,
+        Node parentNode,
+        SharpGLTF.Schema2.Node gltfNode,
+        Dictionary<SharpGLTF.Schema2.Material, Material> materialMap,
+        Skeleton? skeleton)
+    {
+        var mesh = new Mesh
+        {
+            LocalTransform = Matrix4x4.Identity,
+            Name = parentNode.Name
+        };
+
+        parentNode.AddChild(mesh, AttachToParentRule.KeepLocal);
+
+        var geometry = BuildGeometryFromPrimitive(primitive, gltfNode, skeleton);
+        mesh.Geometry = geometry;
+
+        if (primitive.Material != null)
+        {
+            materialMap.TryGetValue(primitive.Material, out var material);
+            mesh.Material = material;
+        }
+    }
+
+    private static Geometry BuildGeometryFromPrimitive(MeshPrimitive primitive, SharpGLTF.Schema2.Node node, Skeleton? skeleton)
+    {
+        var geometry = new Geometry();
+
+        foreach (var (name, accessor) in primitive.VertexAccessors)
+        {
+            ProcessVertexAttribute(geometry, name, primitive, node, skeleton);
+        }
+
+        geometry.SetIndices(primitive.GetIndices().ToList());
+        CalculateTangentsAndBitangents(geometry);
+
+        return geometry;
+    }
+
+    private static void ProcessVertexAttribute(Geometry geometry, string name, MeshPrimitive primitive, SharpGLTF.Schema2.Node node, Skeleton? skeleton)
+    {
+        var columns = primitive.GetVertexColumns();
+
+        switch (name)
+        {
+            case "POSITION":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.Position, 3, columns.Positions.SelectMany(v => new float[] { v.X, v.Y, v.Z }).ToList());
+                break;
+            case "TEXCOORD_0":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_0, 2, columns.TexCoords0.SelectMany(v => new float[] { v.X, v.Y }).ToList());
+                break;
+            case "TEXCOORD_1":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_1, 2, columns.TexCoords1.SelectMany(v => new float[] { v.X, v.Y }).ToList());
+                break;
+            case "TEXCOORD_2":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_2, 2, columns.TexCoords2.SelectMany(v => new float[] { v.X, v.Y }).ToList());
+                break;
+            case "TEXCOORD_3":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.TexCoord_0, 2, columns.TexCoords3.SelectMany(v => new float[] { v.X, v.Y }).ToList());
+                break;
+            case "NORMAL":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.Normal, 3, columns.Normals.SelectMany(v => new float[] { v.X, v.Y, v.Z }).ToList());
+                break;
+            case "JOINTS_0":
+                ProcessJointsAttribute(geometry, BuildInVertexAttribute.Joints_0, columns.Joints0, node, skeleton);
+                break;
+            case "JOINTS_1":
+                ProcessJointsAttribute(geometry, BuildInVertexAttribute.Joints_1, columns.Joints1, node, skeleton);
+                break;
+            case "WEIGHTS_0":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.Weights_0, 4, columns.Weights0.SelectMany(v => new float[] { v.X, v.Y, v.Z, v.W }).ToList());
+                break;
+            case "WEIGHTS_1":
+                geometry.SetVertexAttribute(BuildInVertexAttribute.Weights_1, 4, columns.Weights1.SelectMany(v => new float[] { v.X, v.Y, v.Z, v.W }).ToList());
+                break;
+        }
+    }
+
+    private static void ProcessJointsAttribute(Geometry geometry, BuildInVertexAttribute attribute, IEnumerable<Vector4> joints, SharpGLTF.Schema2.Node node, Skeleton? skeleton)
+    {
+        if (skeleton == null)
+            return;
+
+        geometry.SetVertexAttribute(attribute, 4, joints.SelectMany(v =>
+        {
+            if (node.Skin == null)
+                return new float[] { v.X, v.Y, v.Z, v.W };
+
+            var x = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.X].Name).First().Index;
+            var y = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Y].Name).First().Index;
+            var z = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.Z].Name).First().Index;
+            var w = skeleton.Bones.Where(bone => bone.Name == node.Skin.Joints[(int)v.W].Name).First().Index;
+            return new float[] { x, y, z, w };
+        }).ToList());
+    }
+
+    private static void CalculateTangentsAndBitangents(Geometry geometry)
+    {
+        var normals = geometry.GetAttributeData(BuildInVertexAttribute.Normal);
+        var uvs = geometry.GetAttributeData(BuildInVertexAttribute.TexCoord_0);
+
+        if (normals != null && uvs != null)
+        {
+            ModelHelper.CalcVerticsTbn(geometry.Indices, normals, uvs, out var tangents, out var bitangents);
+            geometry.SetVertexAttribute(BuildInVertexAttribute.Tangent, 3, tangents);
+            geometry.SetVertexAttribute(BuildInVertexAttribute.Bitangent, 3, bitangents);
+        }
     }
 
 }
