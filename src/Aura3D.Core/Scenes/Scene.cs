@@ -7,20 +7,38 @@ using System.Drawing;
 
 namespace Aura3D.Core.Scenes;
 
+/// <summary>
+/// 场景类，负责管理场景中的所有节点、渲染管线、相机以及空间索引结构。
+/// </summary>
 public class Scene
 {
+    /// <summary>
+    /// 获取场景中的所有节点集合。
+    /// </summary>
     public IReadOnlySet<Node> Nodes => _nodes;
 
     private readonly HashSet<Node> _nodes = [];
 
     private readonly HashSet<Node> _dirtyNodes = [];
 
+    /// <summary>
+    /// 获取场景的主相机。
+    /// </summary>
     public Camera MainCamera { get; private set; }
 
+    /// <summary>
+    /// 获取或设置场景的静态网格八叉树空间索引。
+    /// </summary>
     public Octree<Mesh> StaticMeshOctree { get; set; }
 
+    /// <summary>
+    /// 获取或设置场景的渲染管线。
+    /// </summary>
     public RenderPipeline RenderPipeline { get; set; }
 
+    /// <summary>
+    /// 获取或设置场景的背景，可以是立方体贴图或普通纹理。
+    /// </summary>
     public OneOf<CubeTexture, Texture> Background
     {
         get => _background;
@@ -52,6 +70,10 @@ public class Scene
 
     private OneOf<CubeTexture, Texture> _background;
 
+    /// <summary>
+    /// 初始化 <see cref="Scene"/> 类的新实例。
+    /// </summary>
+    /// <param name="createRenderPipeline">用于创建渲染管线的委托函数。</param>
     public Scene(Func<Scene, RenderPipeline> createRenderPipeline)
     {
         RenderPipeline = createRenderPipeline(this);
@@ -65,8 +87,16 @@ public class Scene
         AddNode(MainCamera);
     }
 
+    /// <summary>
+    /// 获取场景中所有控制渲染目标的集合。
+    /// </summary>
     public HashSet<ControlRenderTarget> ControlRenderTargets { get; } = new HashSet<ControlRenderTarget>();
 
+    /// <summary>
+    /// 将节点添加到场景中，并递归添加其所有子节点。
+    /// </summary>
+    /// <param name="node">要添加的节点。</param>
+    /// <exception cref="InvalidOperationException">当节点已添加到场景或已存在时抛出。</exception>
     public void AddNode(Node node)
     {
         if (node.CurrentScene != null)
@@ -97,9 +127,14 @@ public class Scene
         }
     }
 
+    /// <summary>
+    /// 从场景中移除节点，并递归移除其所有子节点。
+    /// </summary>
+    /// <param name="node">要移除的节点。</param>
+    /// <exception cref="InvalidOperationException">当节点未附加到场景或不存在于当前场景时抛出。</exception>
     public void RemoveNode(Node node)
     {
-        if (node.CurrentScene == null) 
+        if (node.CurrentScene == null)
             throw new InvalidOperationException("Node is not attached to any scene.");
 
         if (Nodes.Contains(node) == false)
@@ -138,6 +173,10 @@ public class Scene
         node.ClearPipelineGpuResources();
     }
 
+    /// <summary>
+    /// 将变换发生变化的节点标记为脏节点，以便后续更新其空间索引。
+    /// </summary>
+    /// <param name="node">变换发生变化的节点。</param>
     public void AddNodeTransformDirty(Node node)
     {
         if (_nodes.Contains(node) == false)
@@ -146,15 +185,25 @@ public class Scene
             return;
         _dirtyNodes.Add(node);
     }
-    void OnBoundingBoxChanged(IOctreeObject otreeObject)
+
+    /// <summary>
+    /// 处理包围盒变化事件的回调方法。
+    /// </summary>
+    /// <param name="otreeObject">包围盒发生变化的八叉树对象。</param>
+    private void OnBoundingBoxChanged(IOctreeObject otreeObject)
     {
         if (otreeObject is not Node node)
             return;
         AddNodeTransformDirty(node);
     }
+
+    /// <summary>
+    /// 更新场景中的所有节点，并处理脏节点的空间索引更新。
+    /// </summary>
+    /// <param name="deltaTime">自上一帧以来的时间增量（秒）。</param>
     public void Update(double deltaTime)
     {
-      
+
         foreach(var node in Nodes)
         {
             node.Update(deltaTime);
@@ -165,7 +214,7 @@ public class Scene
                     mesh.CalcSkeletalMeshBoundingBoxInPlayAnimation();
                     StaticMeshOctree.Update(mesh);
                 }
-                
+
             }
         }
 

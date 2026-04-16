@@ -5,7 +5,7 @@ namespace Aura3D.Core.Renderers;
 /// <summary>
 /// 渲染管线的渲染目标管理部分，负责渲染目标的注册、缓存和回收。
 /// </summary>
-public  abstract partial class RenderPipeline
+public abstract partial class RenderPipeline
 {
     Dictionary<string, Dictionary<Size, (RenderTarget, DateTime)>> RenderTargets = new();
 

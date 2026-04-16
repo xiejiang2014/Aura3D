@@ -221,6 +221,11 @@ public class Mesh : Node, IOctreeObject
 
     private List<BoundingBox> SkeletalMeshBoundingBox2 = new();
 
+    /// <summary>
+    /// 骨骼权重阈值，用于判断顶点是否受某个骨骼影响。默认值为 0.3。
+    /// </summary>
+    public const float BoneWeightThreshold = 0.3f;
+
     protected override void OnWorldTransformChanged()
     {
         base.OnWorldTransformChanged();
@@ -299,7 +304,7 @@ public class Mesh : Node, IOctreeObject
                 var position = new Vector3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
                 for (var j = 0; j < 4; j++)
                 {
-                    if (weights[i * 4 + j] > 0.3f)
+                    if (weights[i * 4 + j] > BoneWeightThreshold)
                     {
                         var jointIndex = (int)joints[i * 4 + j];
                         if (JointPoints.TryGetValue(jointIndex, out _) == false)

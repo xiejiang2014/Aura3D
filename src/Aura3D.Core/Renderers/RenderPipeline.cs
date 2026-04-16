@@ -276,7 +276,7 @@ public abstract partial class RenderPipeline
         }
         foreach(var gpuResource in node.GetGpuResources())
         {
-
+            RemoveGpuResource(gpuResource);
         }
         node.ClearPipelineGpuResources();
     }

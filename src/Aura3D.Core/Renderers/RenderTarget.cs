@@ -3,15 +3,27 @@ using Silk.NET.OpenGLES;
 
 namespace Aura3D.Core.Renderers;
 
+/// <summary>
+/// 渲染目标类，用于管理帧缓冲对象及其关联的颜色纹理和深度/模板纹理。
+/// </summary>
 public class RenderTarget : IRenderTarget
 {
+    /// <summary>
+    /// 初始化 <see cref="RenderTarget"/> 类的新实例。
+    /// </summary>
     public RenderTarget()
     {
         depthStencilTexture = new RenderTexture(this);
     }
 
+    /// <inheritedoc />
     public int MipmapLevel { get; private set; } = 1;
 
+    /// <summary>
+    /// 设置渲染目标的 Mipmap 级别。
+    /// </summary>
+    /// <param name="mipmapLevel">Mipmap 级别。</param>
+    /// <returns>当前的 <see cref="RenderTarget"/> 实例。</returns>
     public RenderTarget SetMipMapLevel(int mipmapLevel)
     {
         MipmapLevel = mipmapLevel;
@@ -25,16 +37,35 @@ public class RenderTarget : IRenderTarget
 
     protected RenderTexture depthStencilTexture { get;  set; }
 
+    /// <inheritedoc />
     public ITexture DepthStencilTexture => depthStencilTexture;
 
+    /// <summary>
+    /// 获取或设置一个值，指示是否需要上传 GPU 数据。
+    /// </summary>
     public bool NeedsUpload { get; set; } = true;
 
+    /// <summary>
+    /// 获取或设置帧缓冲对象的 ID。
+    /// </summary>
     public uint FrameBufferId { get; set; }
 
+    /// <summary>
+    /// 获取或设置渲染目标的高度。
+    /// </summary>
     public uint Height { get; set; }
 
+    /// <summary>
+    /// 获取或设置渲染目标的宽度。
+    /// </summary>
     public uint Width { get; set; }
 
+    /// <summary>
+    /// 设置渲染目标的尺寸。
+    /// </summary>
+    /// <param name="width">宽度。</param>
+    /// <param name="height">高度。</param>
+    /// <returns>当前的 <see cref="RenderTarget"/> 实例。</returns>
     public RenderTarget SetSize(uint width, uint height)
     {
         Width = width;
@@ -44,6 +75,10 @@ public class RenderTarget : IRenderTarget
     }
 
 
+    /// <summary>
+    /// 销毁渲染目标及其关联的所有 GPU 资源。
+    /// </summary>
+    /// <param name="gl">OpenGL 上下文。</param>
     public void Destroy(GL gl)
     {
         foreach (var texture in renderTextures)
@@ -61,16 +96,22 @@ public class RenderTarget : IRenderTarget
         {
             gl.DeleteFramebuffer(FrameBufferId);
         }
-        
+
 
     }
+
+    /// <summary>
+    /// 上传渲染目标数据到 GPU。
+    /// </summary>
+    /// <param name="gl">OpenGL 上下文。</param>
+    /// <exception cref="InvalidOperationException">当帧缓冲创建失败时抛出。</exception>
     public unsafe void Upload(GL gl)
     {
         FrameBufferId = gl.GenFramebuffer();
         gl.BindFramebuffer(GLEnum.Framebuffer, FrameBufferId);
 
         int index = 0;
-        
+
         GLEnum state = default;
 
         Span<GLEnum> ColorAttachmentSet = stackalloc GLEnum[renderTextures.Count];
@@ -86,11 +127,11 @@ public class RenderTarget : IRenderTarget
             gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)GLEnum.ClampToEdge);
 
             gl.TexImage2D(GLEnum.Texture2D, 0, (int)texture.InternalFormat.ToGlInternalFormat(), (uint)Width, (uint)Height, 0, (GLEnum)texture.InternalFormat.ToGlPixelFormat(), (GLEnum)texture.InternalFormat.ToGlPixelType(), null);
-           
+
             if (MipmapLevel > 1)
                 gl.GenerateMipmap(GLEnum.TextureCubeMap);
             gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.Texture2D, texture.TextureId, 0);
-         
+
             ColorAttachmentSet[index] = GLEnum.ColorAttachment0 + index;
             index++;
         }
@@ -102,7 +143,7 @@ public class RenderTarget : IRenderTarget
         gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Nearest);
 
         gl.TexImage2D(GLEnum.Texture2D, 0, (int)depthStencilTexture.InternalFormat.ToGlInternalFormat(), (uint)Width, (uint)Height, 0, depthStencilTexture.InternalFormat.ToGlPixelFormat(), depthStencilTexture.InternalFormat.ToGlPixelType(), (void*)0);
-     
+
         if (MipmapLevel > 1)
             gl.GenerateMipmap(GLEnum.TextureCubeMap);
         gl.FramebufferTexture2D(GLEnum.Framebuffer, depthStencilTexture.InternalFormat.ToGlAttachment(), GLEnum.Texture2D, DepthStencilTexture.TextureId, 0);
@@ -117,6 +158,12 @@ public class RenderTarget : IRenderTarget
         }
     }
 
+    /// <summary>
+    /// 向渲染目标添加一个颜色纹理。
+    /// </summary>
+    /// <param name="name">纹理名称。</param>
+    /// <param name="internalFormat">纹理内部格式。</param>
+    /// <returns>当前的 <see cref="RenderTarget"/> 实例。</returns>
     public RenderTarget AddRenderTexture(string name, TextureFormat internalFormat)
     {
         renderTextures.Add(new RenderTexture(this)
@@ -129,6 +176,11 @@ public class RenderTarget : IRenderTarget
     }
 
 
+    /// <summary>
+    /// 获取指定索引的颜色纹理。
+    /// </summary>
+    /// <param name="index">纹理索引。</param>
+    /// <returns>纹理实例，如果索引无效则返回 null。</returns>
     public ITexture? GetTexture(int index)
     {
         if (index < 0)
@@ -138,6 +190,12 @@ public class RenderTarget : IRenderTarget
         return renderTextures[index];
     }
 
+    /// <summary>
+    /// 获取指定名称的颜色纹理。
+    /// </summary>
+    /// <param name="name">纹理名称。</param>
+    /// <returns>纹理实例。</returns>
+    /// <exception cref="KeyNotFoundException">当纹理不存在时抛出。</exception>
     public ITexture GetTexture(string name)
     {
         if (renderTexturesMap.TryGetValue(name, out var texture))
@@ -147,7 +205,16 @@ public class RenderTarget : IRenderTarget
         throw new KeyNotFoundException($"RenderTarget texture '{name}' not found");
     }
 
+    /// <summary>
+    /// 获取深度纹理的格式。
+    /// </summary>
     public TextureFormat DepthTextureFormat { get; private set; }
+
+    /// <summary>
+    /// 设置深度纹理格式。
+    /// </summary>
+    /// <param name="textureFormat">深度纹理格式。</param>
+    /// <returns>当前的 <see cref="RenderTarget"/> 实例。</returns>
     public RenderTarget SetDepthTexture(TextureFormat textureFormat)
     {
         depthStencilTexture.InternalFormat = textureFormat;
@@ -157,9 +224,16 @@ public class RenderTarget : IRenderTarget
 
 
 
+    /// <summary>
+    /// 渲染目标内部的纹理实现类。
+    /// </summary>
     protected class RenderTexture : ITexture
     {
 
+        /// <summary>
+        /// 初始化 <see cref="RenderTexture"/> 类的新实例。
+        /// </summary>
+        /// <param name="rt">所属的渲染目标。</param>
         public RenderTexture(RenderTarget rt)
         {
             RenderTarget = rt;
@@ -167,12 +241,18 @@ public class RenderTarget : IRenderTarget
 
         RenderTarget RenderTarget { get; set; }
 
+        /// <inheritedoc />
         public uint TextureId { get; set; }
 
+        /// <inheritedoc />
         public uint Width => RenderTarget.Width;
 
+        /// <inheritedoc />
         public uint Height => RenderTarget.Height;
 
+        /// <summary>
+        /// 获取或设置纹理的内部格式。
+        /// </summary>
         public TextureFormat InternalFormat { get; set; }
     }
 
