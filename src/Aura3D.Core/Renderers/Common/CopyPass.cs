@@ -10,11 +10,20 @@ using System.Threading.Tasks;
 
 namespace Aura3D.Core.Renderers.Common;
 
+/// <summary>
+/// 复制渲染通道，将一个渲染目标的纹理复制到另一个渲染目标
+/// </summary>
 public class CopyPass : RenderPass
 {
     string _inputRenderTargetName;
 
     string _inputRenderTargetTextureName;
+    /// <summary>
+    /// 初始化复制渲染通道
+    /// </summary>
+    /// <param name="renderPipeline">渲染管线</param>
+    /// <param name="inputRenderTargetName">输入渲染目标名称</param>
+    /// <param name="inputRenderTargetTextureName">输入渲染目标纹理名称</param>
     public CopyPass(RenderPipeline renderPipeline, string inputRenderTargetName, string inputRenderTargetTextureName) : base(renderPipeline)
     {
         _inputRenderTargetName = inputRenderTargetName;

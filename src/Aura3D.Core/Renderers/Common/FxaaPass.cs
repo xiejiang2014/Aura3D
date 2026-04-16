@@ -5,8 +5,17 @@ using System.Numerics;
 
 namespace Aura3D.Core.Renderers;
 
+/// <summary>
+/// FXAA 抗锯齿渲染通道
+/// </summary>
 public class FxaaPass : RenderPass
 {
+    /// <summary>
+    /// 初始化 FXAA 抗锯齿渲染通道
+    /// </summary>
+    /// <param name="renderPipeline">渲染管线</param>
+    /// <param name="inputRenderTargetName">输入渲染目标名称</param>
+    /// <param name="inputRenderTargetTextureName">输入渲染目标纹理名称</param>
     public FxaaPass(RenderPipeline renderPipeline, string inputRenderTargetName, string inputRenderTargetTextureName) : base(renderPipeline)
     {
         this.inputRenderTargetName = inputRenderTargetName;

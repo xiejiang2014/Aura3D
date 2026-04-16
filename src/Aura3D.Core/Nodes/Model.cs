@@ -6,16 +6,35 @@ using System.Reflection.Metadata.Ecma335;
 
 namespace Aura3D.Core.Nodes;
 
+/// <summary>
+/// 模型节点，用于组织和管理包含多个 <see cref="Mesh"/> 的层级结构，支持骨骼动画。
+/// </summary>
 public class Model : Node
 {
+    /// <summary>
+    /// 获取或设置模型的骨骼数据。
+    /// </summary>
     public Skeleton? Skeleton { get; set; }
 
+    /// <summary>
+    /// 获取或设置模型的动画采样器。
+    /// </summary>
     public IAnimationSampler? AnimationSampler { get; set; }
 
+    /// <summary>
+    /// 获取模型及其子节点中的所有网格。
+    /// </summary>
     public IReadOnlyList<Mesh> Meshes => GetNodesInChildren<Mesh>();
 
+    /// <summary>
+    /// 获取一个值，指示该模型是否为骨骼模型。
+    /// </summary>
     public bool IsSkinnedModel => Skeleton != null;
 
+    /// <summary>
+    /// 更新模型状态，主要用于驱动骨骼动画。
+    /// </summary>
+    /// <param name="delta">时间增量（秒）。</param>
     public override void Update(double delta)
     {
         if (IsSkinnedModel == false)
@@ -29,6 +48,11 @@ public class Model : Node
         }
     }
 
+    /// <summary>
+    /// 克隆当前模型及其子节点。
+    /// </summary>
+    /// <param name="copyType">克隆类型，决定资源是共享还是深拷贝。</param>
+    /// <returns>克隆后的模型。</returns>
     public virtual Model Clone(CopyType copyType = CopyType.SharedResource)
     {
         var model = (Model)clone(this, null);
@@ -90,6 +114,9 @@ public class Model : Node
 
     }
 
+    /// <summary>
+    /// 获取模型所有网格合并后的边界框。
+    /// </summary>
     public BoundingBox BoundingBox
     {
         get 
@@ -112,9 +139,20 @@ public class Model : Node
 }
 
 
+/// <summary>
+/// 提供模型相关的辅助方法。
+/// </summary>
 public static class ModelHelper
 {
 
+    /// <summary>
+    /// 计算顶点的切线与副切线（TBN）。
+    /// </summary>
+    /// <param name="indices">索引列表。</param>
+    /// <param name="vertexNormals">顶点法线列表。</param>
+    /// <param name="uvs">纹理坐标列表。</param>
+    /// <param name="tangents">输出的切线列表。</param>
+    /// <param name="bitangents">输出的副切线列表。</param>
     public static void CalcVerticsTbn(List<uint> indices, List<float> vertexNormals, List<float> uvs, out List<float> tangents, out List<float> bitangents)
     {
         tangents = new List<float>();

@@ -8,11 +8,20 @@ using System.Threading.Tasks;
 
 namespace Aura3D.Core.Renderers.Common;
 
+/// <summary>
+/// 色调映射渲染通道，将 HDR 颜色映射到 LDR 范围
+/// </summary>
 public class ToneMappingPass : RenderPass
 {
     string _inputRenderTargetName;
 
     string _inputRenderTargetTextureName;
+    /// <summary>
+    /// 初始化色调映射渲染通道
+    /// </summary>
+    /// <param name="renderPipeline">渲染管线</param>
+    /// <param name="inputRenderTargetName">输入渲染目标名称</param>
+    /// <param name="inputRenderTargetTextureName">输入渲染目标纹理名称</param>
     public ToneMappingPass(RenderPipeline renderPipeline, string inputRenderTargetName, string inputRenderTargetTextureName) : base(renderPipeline)
     {
         _inputRenderTargetName = inputRenderTargetName;

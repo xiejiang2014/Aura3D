@@ -7,8 +7,15 @@ using System.Numerics;
 
 namespace Aura3D.Core.Renderers;
 
+/// <summary>
+/// 背景渲染通道，支持天空盒和背景纹理
+/// </summary>
 public class BackgroundPass: RenderPass
 {
+    /// <summary>
+    /// 初始化背景渲染通道
+    /// </summary>
+    /// <param name="renderPipeline">渲染管线</param>
     public BackgroundPass(RenderPipeline renderPipeline) : base(renderPipeline)
     {
         VertexShader = ShaderResource.BackgroundVert;

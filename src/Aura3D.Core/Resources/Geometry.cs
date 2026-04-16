@@ -5,25 +5,42 @@ using System.Runtime.InteropServices;
 
 namespace Aura3D.Core.Resources;
 
+/// <summary>
+/// 几何体类，存储顶点数据和索引数据
+/// </summary>
 public class Geometry : IGpuResource, IClone<Geometry>
 {
 
+    /// <summary>
+    /// 是否需要上传到GPU
+    /// </summary>
     public bool NeedsUpload { get; set; } = true;
 
     protected Dictionary<string, VertexAttribute> VertexAttributes = new();
 
+    /// <summary>
+    /// 索引列表
+    /// </summary>
     public List<uint> Indices { get; protected set; } = [];
 
     protected HashSet<uint> VertexAttributeLocations = new();
 
     protected List<uint> VboIds = new();
 
+    /// <summary>
+    /// 索引数量
+    /// </summary>
     public int IndicesCount => Indices.Count;
 
+    /// <summary>
+    /// 顶点数组对象ID
+    /// </summary>
     public uint Vao;
 
+    /// <summary>
+    /// 元素缓冲对象ID
+    /// </summary>
     public uint Ebo;
-
     public void SetVertexAttribute(string name, uint location, int size, List<float> data)
     {
         if (data.Count % size != 0)
@@ -142,26 +159,80 @@ public class Geometry : IGpuResource, IClone<Geometry>
 }
 
 
+/// <summary>
+/// 顶点属性结构体
+/// </summary>
 public struct VertexAttribute
 {
+    /// <summary>
+    /// 属性名称
+    /// </summary>
     public string Name;
+    /// <summary>
+    /// 属性位置
+    /// </summary>
     public uint Location;
+    /// <summary>
+    /// 属性大小（分量数）
+    /// </summary>
     public int Size;
+    /// <summary>
+    /// 属性数据
+    /// </summary>
     public List<float> Data;
 }
 
+/// <summary>
+/// 内置顶点属性枚举
+/// </summary>
 public enum BuildInVertexAttribute
 {
+    /// <summary>
+    /// 位置
+    /// </summary>
     Position = 0,
+    /// <summary>
+    /// 第一套纹理坐标
+    /// </summary>
     TexCoord_0 = 1,
+    /// <summary>
+    /// 法线
+    /// </summary>
     Normal = 2,
+    /// <summary>
+    /// 切线
+    /// </summary>
     Tangent = 3,
+    /// <summary>
+    /// 副切线
+    /// </summary>
     Bitangent = 4,
+    /// <summary>
+    /// 第一套关节索引
+    /// </summary>
     Joints_0 = 5,
+    /// <summary>
+    /// 第一套权重
+    /// </summary>
     Weights_0 = 6,
+    /// <summary>
+    /// 第二套关节索引
+    /// </summary>
     Joints_1 = 7,
+    /// <summary>
+    /// 第二套权重
+    /// </summary>
     Weights_1 = 8,
+    /// <summary>
+    /// 第二套纹理坐标
+    /// </summary>
     TexCoord_1 = 9,
+    /// <summary>
+    /// 第三套纹理坐标
+    /// </summary>
     TexCoord_2 = 10,
+    /// <summary>
+    /// 第四套纹理坐标
+    /// </summary>
     TexCoord_3 = 11,
 }

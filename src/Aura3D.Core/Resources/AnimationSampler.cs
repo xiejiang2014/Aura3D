@@ -7,9 +7,19 @@ using System.Threading.Tasks;
 
 namespace Aura3D.Core.Resources;
 
+/// <summary>
+/// 动画采样器，负责动画的播放和采样
+/// </summary>
 public class AnimationSampler : IAnimationSampler
 {
+    /// <summary>
+    /// 是否使用外部更新
+    /// </summary>
     public bool ExternalUpdate { get; set; } = false;
+    /// <summary>
+    /// 初始化动画采样器
+    /// </summary>
+    /// <param name="animation">动画对象</param>
     public AnimationSampler(Animation animation)
     {
         bonesTransform = new Matrix4x4[animation.Skeleton!.Bones.Count];
@@ -93,16 +103,40 @@ public class AnimationSampler : IAnimationSampler
 
 }
 
+/// <summary>
+/// 动画循环模式
+/// </summary>
 public enum LoopMode
 {
+    /// <summary>
+    /// 播放一次
+    /// </summary>
     Once,
+    /// <summary>
+    /// 循环播放
+    /// </summary>
     Loop,
+    /// <summary>
+    /// 往复播放
+    /// </summary>
     PingPong
 }
 
+/// <summary>
+/// 复制类型
+/// </summary>
 public enum CopyType
 {
+    /// <summary>
+    /// 共享资源
+    /// </summary>
     SharedResource,
+    /// <summary>
+    /// 共享资源数据
+    /// </summary>
     SharedResourceData,
+    /// <summary>
+    /// 完全复制
+    /// </summary>
     FullCopy
 }

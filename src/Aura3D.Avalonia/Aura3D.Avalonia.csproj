@@ -2,6 +2,10 @@
 
   <Import Project="../../Package.props" />
 
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" />
   </ItemGroup>

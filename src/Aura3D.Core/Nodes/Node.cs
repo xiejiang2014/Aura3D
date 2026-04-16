@@ -10,7 +10,14 @@ namespace Aura3D.Core.Nodes;
 /// </summary>
 public partial class Node
 {
+    /// <summary>
+    /// 获取或设置节点名称。
+    /// </summary>
     public string Name { get; set; } = "Node";
+
+    /// <summary>
+    /// 获取节点的标签集合。
+    /// </summary>
     public HashSet<string> Tags { get; } = new HashSet<string>();
 
     #region Transform
@@ -223,6 +230,11 @@ public partial class Node
         }
     }
 
+    /// <summary>
+    /// 开始变换更新作用域，在此期间禁用自动变换更新。
+    /// </summary>
+    /// <param name="updateTransformMode">需要更新的变换模式。</param>
+    /// <returns>变换更新作用域。</returns>
     public IDisposable BeginTransformUpdate(UpdateTransformMode updateTransformMode = UpdateTransformMode.All)
     {
         _autoUpdateTransform = false;
@@ -275,18 +287,39 @@ public partial class Node
         _localTransform = MatrixHelper.CreateTransform(_position, _rotationQuaternion, _scale);
     }
 
+    /// <summary>
+    /// 获取节点的前方方向向量。
+    /// </summary>
     public Vector3 Forward => WorldTransform.ForwardVector();
 
+    /// <summary>
+    /// 获取节点的后方方向向量。
+    /// </summary>
     public Vector3 Backward => -1 * Forward;
 
+    /// <summary>
+    /// 获取节点的上方方向向量。
+    /// </summary>
     public Vector3 Up => WorldTransform.UpVector();
 
+    /// <summary>
+    /// 获取节点的下方方向向量。
+    /// </summary>
     public Vector3 Down => -1 * Up;
 
+    /// <summary>
+    /// 获取节点的右方方向向量。
+    /// </summary>
     public Vector3 Right => WorldTransform.RightVector();
 
+    /// <summary>
+    /// 获取节点的左方方向向量。
+    /// </summary>
     public Vector3 Left => -1 * Right;
 
+    /// <summary>
+    /// 初始化 <see cref="Node"/> 类的新实例。
+    /// </summary>
     public Node()
     {
 
@@ -307,6 +340,9 @@ public partial class Node
 
     #region Hierarchy
 
+    /// <summary>
+    /// 获取或设置当前节点所在的场景。
+    /// </summary>
     public Scene? CurrentScene { get; internal set; }
 
     /// <summary>
@@ -415,6 +451,10 @@ public partial class Node
             CurrentScene.RemoveNode(child);
         }
     }
+
+    /// <summary>
+    /// 获取或设置节点是否启用，同时会级联影响所有子节点。
+    /// </summary>
     public bool Enable 
     {
         get => _enable; 
@@ -429,6 +469,12 @@ public partial class Node
     }
 
     private bool _enable = true;
+
+    /// <summary>
+    /// 递归获取当前节点及其子节点中指定类型的节点列表。
+    /// </summary>
+    /// <typeparam name="T">节点类型。</typeparam>
+    /// <returns>匹配的节点列表。</returns>
     public List<T> GetNodesInChildren<T>() where T : Node
     {
         var list = new List<T>();
@@ -447,6 +493,12 @@ public partial class Node
 
     public Dictionary<string, IGpuResource> _pipelineGpuResources = new Dictionary<string, IGpuResource>();
 
+    /// <summary>
+    /// 按名称获取渲染管线中的 GPU 资源。
+    /// </summary>
+    /// <typeparam name="T">GPU 资源类型。</typeparam>
+    /// <param name="name">资源名称。</param>
+    /// <returns>匹配类型的 GPU 资源，若不存在则返回默认值。</returns>
     public T? GetPipelineGpuResource<T>(string name) where T : IGpuResource
     {
         if (_pipelineGpuResources.TryGetValue(name, out var resource))
@@ -466,45 +518,75 @@ public partial class Node
         }
     }
 
+    /// <summary>
+    /// 移除渲染管线中指定名称的 GPU 资源。
+    /// </summary>
+    /// <param name="name">资源名称。</param>
     public void RemovePipelineGpuResource(string name)
     {
         _pipelineGpuResources.Remove(name);
     }
 
+    /// <summary>
+    /// 查询渲染管线中的所有 GPU 资源。
+    /// </summary>
+    /// <returns>GPU 资源的可查询集合。</returns>
     public IQueryable<IGpuResource> QueryPipelineGpuResources()
     {
         return _pipelineGpuResources.Values.AsQueryable();
     }
 
+    /// <summary>
+    /// 清空渲染管线中的所有 GPU 资源。
+    /// </summary>
     public void ClearPipelineGpuResources()
     {
         _pipelineGpuResources.Clear();
     }
 
 
+    /// <summary>
+    /// 设置渲染管线中的 GPU 资源。
+    /// </summary>
+    /// <param name="name">资源名称。</param>
+    /// <param name="resource">GPU 资源。</param>
     public void SetPipelineGpuResource(string name, IGpuResource resource)
     {
         _pipelineGpuResources[name] = resource;
     }
 
 
+    /// <summary>
+    /// 获取当前节点使用的 GPU 资源列表。
+    /// </summary>
+    /// <returns>GPU 资源列表。</returns>
     public virtual List<IGpuResource> GetGpuResources()
     {
         return [];
     }
 
+    /// <summary>
+    /// 更新节点状态。
+    /// </summary>
+    /// <param name="delta">时间增量（秒）。</param>
     public virtual void Update(double delta)
     {
 
     }
 }
 
+/// <summary>
+/// 定义子节点附加到父节点时的变换规则。
+/// </summary>
 public enum AttachToParentRule
 {
     KeepWorld,
     KeepLocal
 }
 
+/// <summary>
+/// 变换更新模式。
+/// </summary>
 public enum UpdateTransformMode
 {
     Local = 1 >> 0,

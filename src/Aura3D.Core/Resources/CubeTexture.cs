@@ -4,9 +4,18 @@ using System.Runtime.InteropServices;
 
 namespace Aura3D.Core.Resources;
 
+/// <summary>
+/// 立方体纹理类，用于天空盒等需要6面纹理的场景
+/// </summary>
 public class CubeTexture : BaseTexture<CubeTexture>, IGpuResource, ICubeTexture, IClone<CubeTexture>
 {
+    /// <summary>
+    /// 是否需要上传到GPU
+    /// </summary>
     public bool NeedsUpload { get; set; } = true;
+    /// <summary>
+    /// 纹理ID
+    /// </summary>
     public uint TextureId { get; set; }
 
     public uint Width { get; set; }
@@ -125,9 +134,18 @@ public class CubeTexture : BaseTexture<CubeTexture>, IGpuResource, ICubeTexture,
 }
 
 
-public class HDRIToCubeTextureConverter 
+/// <summary>
+/// HDRI 到立方体纹理转换器
+/// </summary>
+public class HDRIToCubeTextureConverter
 {
 
+    /// <summary>
+    /// 从全景纹理转换为立方体纹理
+    /// </summary>
+    /// <param name="texture">全景纹理</param>
+    /// <param name="cubeFaceSize">立方体每个面的大小</param>
+    /// <returns>立方体纹理</returns>
     public static CubeTexture ConvertFromTexture(Texture texture, uint cubeFaceSize)
     {
         var cubeTexture = new CubeTexture();

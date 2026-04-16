@@ -6,9 +6,16 @@ using System.Numerics;
 
 namespace Aura3D.Core.Renderers;
 
+/// <summary>
+/// 无光照渲染通道，仅显示基础纹理颜色
+/// </summary>
 public class NoLightPass : RenderPass
 {
     Resources.Texture defaultBaseColor;
+    /// <summary>
+    /// 初始化无光照渲染通道
+    /// </summary>
+    /// <param name="renderPipeline">渲染管线</param>
     public NoLightPass(RenderPipeline renderPipeline) : base(renderPipeline)
     {
         this.FragmentShader = ShaderResource.NoLightFrag;

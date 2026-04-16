@@ -3,15 +3,36 @@ using Aura3D.Core.Math;
 
 namespace Aura3D.Core.Resources;
 
+/// <summary>
+/// 动画类，存储动画数据和采样方法
+/// </summary>
 public class Animation
 {
+    /// <summary>
+    /// 动画名称
+    /// </summary>
     public string Name = string.Empty;
-    
+
+    /// <summary>
+    /// 动画持续时间（秒）
+    /// </summary>
     public float Duration; // in seconds
-    
+
+    /// <summary>
+    /// 动画通道字典，键为骨骼名称
+    /// </summary>
     public Dictionary<string, AnimationChannel> Channels = new();
 
+    /// <summary>
+    /// 关联的骨骼系统
+    /// </summary>
     public Skeleton? Skeleton;
+    /// <summary>
+    /// 在指定时间采样动画通道的变换矩阵
+    /// </summary>
+    /// <param name="channelName">通道名称（骨骼名称）</param>
+    /// <param name="time">采样时间</param>
+    /// <returns>变换矩阵</returns>
     public Matrix4x4 Sample(string channelName, float time)
     {
         if (!Channels.TryGetValue(channelName, out var channel))
@@ -31,22 +52,55 @@ public class Animation
     }
 }
 
+/// <summary>
+/// 动画通道，包含位置、旋转和缩放的关键帧数据
+/// </summary>
 public class AnimationChannel
 {
+    /// <summary>
+    /// 位置关键帧列表
+    /// </summary>
     public List<Keyframe<Vector3>> PositionKeyframes = new();
+    /// <summary>
+    /// 旋转关键帧列表
+    /// </summary>
     public List<Keyframe<Quaternion>> RotationKeyframes = new();
+    /// <summary>
+    /// 缩放关键帧列表
+    /// </summary>
     public List<Keyframe<Vector3>> ScaleKeyframes = new();
 
 }
+/// <summary>
+/// 关键帧结构体
+/// </summary>
+/// <typeparam name="T">关键帧值类型</typeparam>
 public struct Keyframe<T> where T : struct
 {
+    /// <summary>
+    /// 关键帧时间
+    /// </summary>
     public float Time;
+    /// <summary>
+    /// 关键帧值
+    /// </summary>
     public T Value;
 }
 
 
+/// <summary>
+/// 采样器辅助类，提供关键帧插值方法
+/// </summary>
 public static class SamplerHelper
 {
+    /// <summary>
+    /// 根据时间从关键帧列表中获取插值后的值
+    /// </summary>
+    /// <typeparam name="T">关键帧值类型</typeparam>
+    /// <param name="list">关键帧列表</param>
+    /// <param name="time">采样时间</param>
+    /// <param name="lerpFunc">插值函数</param>
+    /// <returns>插值后的值</returns>
     public static T GetValueByTime<T>(this IReadOnlyList<Keyframe<T>> list, float time, Func<Keyframe<T>, Keyframe<T>, float, T> lerpFunc) where T : struct
     {
         if (list.Count == 0)
@@ -70,6 +124,13 @@ public static class SamplerHelper
     }
 
 
+    /// <summary>
+    /// 浮点数线性插值
+    /// </summary>
+    /// <param name="left">左侧关键帧</param>
+    /// <param name="right">右侧关键帧</param>
+    /// <param name="time">采样时间</param>
+    /// <returns>插值结果</returns>
     public static float Lerp(Keyframe<float> left, Keyframe<float> right, float time)
     {
         float t = (time - left.Time) / (right.Time - left.Time);
@@ -78,6 +139,13 @@ public static class SamplerHelper
         return v0 + t * (v1 - v0);
     }
 
+    /// <summary>
+    /// 三维向量线性插值
+    /// </summary>
+    /// <param name="left">左侧关键帧</param>
+    /// <param name="right">右侧关键帧</param>
+    /// <param name="time">采样时间</param>
+    /// <returns>插值结果</returns>
     public static Vector3 Lerp(Keyframe<Vector3> left, Keyframe<Vector3> right, float time)
     {
         float t = (time - left.Time) / (right.Time - left.Time);
@@ -86,6 +154,13 @@ public static class SamplerHelper
         return Vector3.Lerp(v0, v1, t);
     }
 
+    /// <summary>
+    /// 四元数球面线性插值
+    /// </summary>
+    /// <param name="left">左侧关键帧</param>
+    /// <param name="right">右侧关键帧</param>
+    /// <param name="time">采样时间</param>
+    /// <returns>插值结果</returns>
     public static Quaternion Slerp(Keyframe<Quaternion> left, Keyframe<Quaternion> right, float time)
     {
         float t = (time - left.Time) / (right.Time - left.Time);

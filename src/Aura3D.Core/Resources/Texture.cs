@@ -4,8 +4,16 @@ using System.Runtime.InteropServices;
 
 namespace Aura3D.Core.Resources;
 
+/// <summary>
+/// 纹理类，支持2D纹理的加载、上传和渲染
+/// </summary>
 public class Texture : BaseTexture<Texture>, IClone<Texture>, IGpuResource, ITexture
 {
+    /// <summary>
+    /// 从颜色创建纯色纹理
+    /// </summary>
+    /// <param name="color">颜色</param>
+    /// <returns>纯色纹理</returns>
     public static Texture CreateFromColor(Color color)
     {
         var texture = new Resources.Texture();
@@ -156,22 +164,49 @@ public class Texture : BaseTexture<Texture>, IClone<Texture>, IGpuResource, ITex
     }
 }
 
+/// <summary>
+/// 颜色格式枚举
+/// </summary>
 public enum ColorFormat
 {
     RGB = 0,
     RGBA = 1,
 }
 
+/// <summary>
+/// 纹理环绕模式枚举
+/// </summary>
 public enum TextureWrapMode
 {
+    /// <summary>
+    /// 重复
+    /// </summary>
     Repeat = 0,
+    /// <summary>
+    /// 镜像重复
+    /// </summary>
     MirroredRepeat = 1,
+    /// <summary>
+    /// 钳制到边缘
+    /// </summary>
     ClampToEdge = 2,
+    /// <summary>
+    /// 钳制到边界颜色
+    /// </summary>
     ClampToBorder = 3,
 }
 
+/// <summary>
+/// 纹理过滤模式枚举
+/// </summary>
 public enum TextureFilterMode
 {
+    /// <summary>
+    /// 最近邻过滤
+    /// </summary>
     Nearest = 0,
+    /// <summary>
+    /// 线性过滤
+    /// </summary>
     Linear = 1,
 }

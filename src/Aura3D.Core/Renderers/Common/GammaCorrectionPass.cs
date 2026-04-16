@@ -4,12 +4,21 @@ using System.Numerics;
 
 namespace Aura3D.Core.Renderers;
 
+/// <summary>
+/// 伽马校正渲染通道
+/// </summary>
 public class GammaCorrectionPass : RenderPass
 {
     protected string inputRenderTargetName;
 
     protected string inputRenderTargetTextureName;
 
+    /// <summary>
+    /// 初始化伽马校正渲染通道
+    /// </summary>
+    /// <param name="renderPipeline">渲染管线</param>
+    /// <param name="inputRenderTargetName">输入渲染目标名称</param>
+    /// <param name="inputRenderTargetTextureName">输入渲染目标纹理名称</param>
     public GammaCorrectionPass(RenderPipeline renderPipeline, string inputRenderTargetName, string inputRenderTargetTextureName) : base(renderPipeline)
     {
 

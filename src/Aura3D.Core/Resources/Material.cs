@@ -3,31 +3,67 @@ using System.Drawing;
 
 namespace Aura3D.Core.Resources;
 
+/// <summary>
+/// 材质类，定义物体的表面属性和渲染行为
+/// </summary>
 public class Material : IClone<Material>, IGpuResource
 {
+    /// <summary>
+    /// 是否需要上传到GPU
+    /// </summary>
     public bool NeedsUpload { get; set; } = false;
+    /// <summary>
+    /// 材质通道列表
+    /// </summary>
     public List<Channel> Channels { get; set; } = [];
 
     private Dictionary<string, object> parameters  { get; set; } = new Dictionary<string, object>();
 
+    /// <summary>
+    /// 混合模式
+    /// </summary>
     public BlendMode BlendMode { get; set; } = BlendMode.Opaque;
 
+    /// <summary>
+    /// 是否双面渲染
+    /// </summary>
     public bool DoubleSided { get; set; } = false;
 
+    /// <summary>
+    /// 透明度阈值
+    /// </summary>
     public float AlphaCutoff { get; set; } = 0.5f;
 
+    /// <summary>
+    /// 是否有自定义着色器
+    /// </summary>
     public bool HasShader { get; set; } = false;
+    /// <summary>
+    /// 顶点着色器字典（只读）
+    /// </summary>
     public IReadOnlyDictionary<string, string> VertexShaders => _vertexShaders;
 
     private Dictionary<string, string> _vertexShaders = new Dictionary<string, string>();
 
     private Dictionary<string, string> _fragmentShaders = new Dictionary<string, string>();
 
+    /// <summary>
+    /// 片段着色器字典（只读）
+    /// </summary>
     public IReadOnlyDictionary<string, string> FragmentShaders => _fragmentShaders;
 
+    /// <summary>
+    /// 着色器字典
+    /// </summary>
     public Dictionary<string, Shader> Shaders { get; } = new Dictionary<string, Shader>();
 
-    // The type of the value to be retrieved must be consistent with the type of the generic; otherwise, the value cannot be retrieved.
+    /// <summary>
+    /// 尝试获取参数值
+    /// </summary>
+    /// <typeparam name="T">参数类型</typeparam>
+    /// <param name="key">参数键名</param>
+    /// <param name="value">参数值</param>
+    /// <returns>是否成功获取</returns>
     public bool TryGetParameterValue<T>(string key, out T value)
     {
         if (parameters.TryGetValue(key, out var obj) && obj is T t)
@@ -40,6 +76,12 @@ public class Material : IClone<Material>, IGpuResource
         return false;
     }
 
+    /// <summary>
+    /// 设置参数值
+    /// </summary>
+    /// <typeparam name="T">参数类型</typeparam>
+    /// <param name="key">参数键名</param>
+    /// <param name="value">参数值</param>
     public void SetParameterValue<T>(string key, T value)
     {
         if(value != null)
@@ -215,7 +257,13 @@ public class Material : IClone<Material>, IGpuResource
 
 }
 
+/// <summary>
+/// 材质通道类，包含纹理通道
+/// </summary>
 
+/// <summary>
+/// 通道名称
+/// </summary>
 public class Channel
 {
     public string Name { get; set; } = string.Empty;

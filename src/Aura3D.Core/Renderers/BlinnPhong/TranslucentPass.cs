@@ -4,8 +4,15 @@ using Aura3D.Core.Resources;
 
 namespace Aura3D.Core.Renderers;
 
+/// <summary>
+/// 透明物体渲染通道，渲染半透明物体
+/// </summary>
 public class TranslucentPass : LightPass
 {
+    /// <summary>
+    /// 初始化透明物体渲染通道
+    /// </summary>
+    /// <param name="renderPipeline">渲染管线</param>
     public TranslucentPass(RenderPipeline renderPipeline) : base(renderPipeline)
     {
         ShaderName = nameof(TranslucentPass);

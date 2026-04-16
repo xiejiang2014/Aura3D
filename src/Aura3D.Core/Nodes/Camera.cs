@@ -6,10 +6,19 @@ using Aura3D.Core.Resources;
 
 namespace Aura3D.Core.Nodes;
 
+/// <summary>
+/// 相机节点，负责场景的拍摄与渲染，支持透视与正交两种投影模式。
+/// </summary>
 public class Camera : Node
 {
+    /// <summary>
+    /// 默认的控件渲染目标。
+    /// </summary>
     public static ControlRenderTarget? ControlRenderTarget;
 
+    /// <summary>
+    /// 初始化 <see cref="Camera"/> 类的新实例。
+    /// </summary>
     public Camera()
     {
         if (ControlRenderTarget == null)
@@ -17,14 +26,29 @@ public class Camera : Node
         RenderTarget = ControlRenderTarget;
     }
 
+    /// <summary>
+    /// 获取或设置近裁剪面距离。
+    /// </summary>
     public float NearPlane { get; set; } = 1f; // 近裁剪面
 
+    /// <summary>
+    /// 获取或设置远裁剪面距离。
+    /// </summary>
     public float FarPlane { get; set; } = 100f; // 远裁剪面
 
+    /// <summary>
+    /// 获取或设置视野角度（度数）。
+    /// </summary>
     public float FieldOfView { get; set; } = 75f; // 视野角度（度数）
 
+    /// <summary>
+    /// 获取或设置正交投影时的大小。
+    /// </summary>
     public float OrthographicSize { get; set; } = 5f; // 正交投影时的大小
 
+    /// <summary>
+    /// 获取观察矩阵。
+    /// </summary>
     public Matrix4x4 View
     {
         get
@@ -36,6 +60,9 @@ public class Camera : Node
         }
     }
 
+    /// <summary>
+    /// 获取投影矩阵。
+    /// </summary>
     public Matrix4x4 Projection
     {
         get
@@ -62,14 +89,30 @@ public class Camera : Node
         }
     }
 
+    /// <summary>
+    /// 获取视图投影矩阵（View * Projection）。
+    /// </summary>
     public Matrix4x4 ViewProjection => View * Projection;
 
+    /// <summary>
+    /// 获取或设置投影类型。
+    /// </summary>
     public ProjectionType ProjectionType { get; set; } = ProjectionType.Perspective; // 投影类型
 
+    /// <summary>
+    /// 获取或设置渲染目标。
+    /// </summary>
     public IRenderTarget RenderTarget { get; set; } = new ControlRenderTarget();
 
+    /// <summary>
+    /// 是否渲染背景。
+    /// </summary>
     public bool IsRenderBackground = true;
 
+    /// <summary>
+    /// 获取当前相机使用的 GPU 资源列表。
+    /// </summary>
+    /// <returns>GPU 资源列表。</returns>
     public override List<IGpuResource> GetGpuResources()
     {
         var list = new List<IGpuResource>();
@@ -79,6 +122,10 @@ public class Camera : Node
         return list;
     }
 
+    /// <summary>
+    /// 使相机朝向指定目标点。
+    /// </summary>
+    /// <param name="target">目标位置。</param>
     public void LookAt(Vector3 target)
     {
         var camera = this;
@@ -119,6 +166,11 @@ public class Camera : Node
         );
     }
 
+    /// <summary>
+    /// 调整相机位置与裁剪面，使其完整包围指定的轴对齐包围盒。
+    /// </summary>
+    /// <param name="aabb">包围盒。</param>
+    /// <param name="padding">边距比例，范围为 0 到 1。</param>
     public void FitToBoundingBox(BoundingBox aabb, float padding = 0.1f)
     {
         var camera = this;
@@ -157,12 +209,18 @@ public class Camera : Node
     }
 }
 
+/// <summary>
+/// 投影类型。
+/// </summary>
 public enum ProjectionType
 {
     Perspective, // 透视投影
     Orthographic // 正交投影
 }
 
+/// <summary>
+/// 清除缓冲区类型。
+/// </summary>
 public enum ClearType
 {
     OnlyDepth, // 仅清除颜色缓冲区

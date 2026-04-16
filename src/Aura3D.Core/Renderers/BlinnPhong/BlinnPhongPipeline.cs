@@ -3,9 +3,16 @@ using Aura3D.Core.Scenes;
 using Silk.NET.OpenGLES;
 
 namespace Aura3D.Core.Renderers;
+/// <summary>
+/// Blinn-Phong 渲染管线，支持阴影、光照、透明度和后处理效果
+/// </summary>
 public class BlinnPhongPipeline : RenderPipeline, IRenderPipelineCreateInstance
 {
 
+    /// <summary>
+    /// 初始化 Blinn-Phong 渲染管线
+    /// </summary>
+    /// <param name="scene">场景对象</param>
     public BlinnPhongPipeline(Scene scene) : base(scene)
     {
         var shadowMapPass = new ShadowMapPass(this);
@@ -66,5 +73,10 @@ public class BlinnPhongPipeline : RenderPipeline, IRenderPipelineCreateInstance
 
     }
 
+    /// <summary>
+    /// 创建渲染管线实例的工厂方法
+    /// </summary>
+    /// <param name="scene">场景对象</param>
+    /// <returns>新的 BlinnPhongPipeline 实例</returns>
     public static RenderPipeline CreateInstance(Scene scene) => new BlinnPhongPipeline(scene);
 }

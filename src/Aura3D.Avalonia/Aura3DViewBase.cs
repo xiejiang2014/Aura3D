@@ -12,8 +12,14 @@ using Avalonia.VisualTree;
 
 namespace Aura3D.Avalonia;
 
+/// <summary>
+/// Avalonia OpenGL 渲染控件的基类，负责管理场景生命周期、渲染循环以及节点操作。
+/// </summary>
 public abstract class Aura3DViewBase : global::Avalonia.OpenGL.Controls.OpenGlControlBase, ICustomHitTest
 {
+    /// <summary>
+    /// 获取或设置当前关联的 3D 场景。
+    /// </summary>
     public Scene? Scene { get; protected set; }
 
     Stopwatch Stopwatch;
@@ -21,11 +27,17 @@ public abstract class Aura3DViewBase : global::Avalonia.OpenGL.Controls.OpenGlCo
     int fb = 0;
 
     protected bool isSizeChanged = true;
+    /// <summary>
+    /// 初始化 <see cref="Aura3DViewBase"/> 类的新实例。
+    /// </summary>
     public Aura3DViewBase()
     {
         Stopwatch = new Stopwatch();
     }
 
+    /// <summary>
+    /// 创建渲染管线的委托，默认使用 <see cref="BlinnPhongPipeline"/>。
+    /// </summary>
     public Func<Scene, RenderPipeline> CreateRenderPipeline = scene => new BlinnPhongPipeline(scene);
 
     protected override void OnOpenGlInit(GlInterface gl)
@@ -123,11 +135,20 @@ public abstract class Aura3DViewBase : global::Avalonia.OpenGL.Controls.OpenGlCo
 
     protected abstract void OnSceneUpdated(double deltaTime);
 
+    /// <summary>
+    /// 向场景中添加指定节点。
+    /// </summary>
+    /// <typeparam name="T">节点类型。</typeparam>
+    /// <param name="node">要添加的节点。</param>
     public void AddNode<T>(T node) where T : Node
     {
         Scene?.AddNode(node);
     }
 
+    /// <summary>
+    /// 从场景中移除指定节点。
+    /// </summary>
+    /// <param name="node">要移除的节点。</param>
     public void Remove(Node node)
     {
         Scene?.RemoveNode(node);
@@ -138,6 +159,11 @@ public abstract class Aura3DViewBase : global::Avalonia.OpenGL.Controls.OpenGlCo
         isSizeChanged = true;
     }
 
+    /// <summary>
+    /// 对指定点进行命中测试，判断其是否位于控件边界内。
+    /// </summary>
+    /// <param name="point">要测试的点。</param>
+    /// <returns>如果点在边界内，则为 <c>true</c>；否则为 <c>false</c>。</returns>
     public bool HitTest(Point point)
     {
         if (point.X < 0 || point.Y < 0 || point.X > Bounds.Width || point.Y > Bounds.Height)
@@ -145,5 +171,8 @@ public abstract class Aura3DViewBase : global::Avalonia.OpenGL.Controls.OpenGlCo
         return true;
     }
 
+    /// <summary>
+    /// 获取场景的主相机。
+    /// </summary>
     public Camera MainCamera => Scene.MainCamera;
 }
