@@ -57,6 +57,11 @@ public class CylinderGeometry : Geometry
     /// <param name="thetaLength">圆周方向的总角度长度（弧度）。</param>
     /// <exception cref="ArgumentOutOfRangeException">当 radialSegments 小于 3 时抛出。</exception>
     /// <exception cref="ArgumentOutOfRangeException">当 heightSegments 小于 1 时抛出。</exception>
+    /// <summary>是否生成 py=+halfHeight 端盖（RadiusBottom 面，旋转后对应 -X / 把柄端）。</summary>
+    public bool CapPosY { get; }
+    /// <summary>是否生成 py=-halfHeight 端盖（RadiusTop 面，旋转后对应 +X / 杆头端）。</summary>
+    public bool CapNegY { get; }
+
     public CylinderGeometry(
         float radiusTop = 1f,
         float radiusBottom = 1f,
@@ -65,7 +70,9 @@ public class CylinderGeometry : Geometry
         int heightSegments = 1,
         bool openEnded = false,
         float thetaStart = 0f,
-        float thetaLength = MathF.PI * 2f)
+        float thetaLength = MathF.PI * 2f,
+        bool capPosY = true,
+        bool capNegY = true)
     {
         if (radialSegments < 3) throw new ArgumentOutOfRangeException(nameof(radialSegments), "radialSegments must be >= 3");
         if (heightSegments < 1) throw new ArgumentOutOfRangeException(nameof(heightSegments), "heightSegments must be >= 1");
@@ -78,6 +85,8 @@ public class CylinderGeometry : Geometry
         OpenEnded = openEnded;
         ThetaStart = thetaStart;
         ThetaLength = thetaLength;
+        CapPosY = openEnded ? false : capPosY;
+        CapNegY = openEnded ? false : capNegY;
 
         Build();
     }
@@ -119,12 +128,12 @@ public class CylinderGeometry : Geometry
                 positions.Add(pz);
 
                 // compute normal (consider slope between top and bottom)
-                float slope = (RadiusBottom - RadiusTop) / Height; // rise over run
+                float slope = (RadiusBottom - RadiusTop) / Height;
                 var normal = new Vector3(sin, slope, cos);
                 if (normal.LengthSquared() > 0f) normal = Vector3.Normalize(normal);
-                normals.Add(-1 * normal.X);
-                normals.Add(-1 * normal.Y);
-                normals.Add(-1 * normal.Z);
+                normals.Add(normal.X);
+                normals.Add(normal.Y);
+                normals.Add(normal.Z);
 
                 // uv
                 uvs.Add(u);
@@ -146,96 +155,68 @@ public class CylinderGeometry : Geometry
                 uint c = (uint)indexArray[y + 1][x + 1];
                 uint d = (uint)indexArray[y][x + 1];
 
-                // two triangles (a, b, d) and (b, c, d)
+                // CCW from outside: (a,d,b) and (b,d,c)
                 indices.Add(a);
-                indices.Add(b);
                 indices.Add(d);
+                indices.Add(b);
 
                 indices.Add(b);
-                indices.Add(c);
                 indices.Add(d);
+                indices.Add(c);
             }
         }
 
-        // generate caps if not openEnded
-        if (!OpenEnded)
+        // cap at py=+halfHeight — RadiusBottom face, normal +Y
+        if (CapPosY && RadiusBottom > 0f)
         {
-            // top cap (y = 0) — normal +Y
-            if (RadiusTop > 0f)
+            int startIndex = index;
+            for (int x = 0; x < RadialSegments; x++)
             {
-                int startIndex = index;
-                // rim
-                for (int x = 0; x < RadialSegments; x++)
-                {
-                    float u = (float)x / RadialSegments;
-                    float theta = ThetaStart + u * ThetaLength;
-                    float sin = MathF.Sin(theta);
-                    float cos = MathF.Cos(theta);
-
-                    float px = RadiusTop * sin;
-                    float pz = RadiusTop * cos;
-                    float py = halfHeight;
-
-                    positions.Add(px); positions.Add(py); positions.Add(pz);
-                    normals.Add(0f); normals.Add(-1f); normals.Add(0f);
-                    uvs.Add((sin * 0.5f) + 0.5f); uvs.Add((cos * 0.5f) + 0.5f);
-                    index++;
-                }
-
-                // center
-                int centerIndex = index++;
-                positions.Add(0f); positions.Add(halfHeight); positions.Add(0f);
-                normals.Add(0f); normals.Add(-1f); normals.Add(0f);
-                uvs.Add(0.5f); uvs.Add(0.5f);
-
-                for (int x = 0; x < RadialSegments; x++)
-                {
-                    uint i1 = (uint)(startIndex + x);
-                    uint i2 = (uint)(startIndex + ((x + 1) % RadialSegments));
-                    // triangle (center, i2, i1) to have outward-facing winding (top view)
-                    indices.Add((uint)centerIndex);
-                    indices.Add(i2);
-                    indices.Add(i1);
-                }
-            }
-
-            // bottom cap (y = HeightSegments) — normal -Y
-            if (RadiusBottom > 0f)
-            {
-                int startIndex = index;
-                // rim
-                for (int x = 0; x < RadialSegments; x++)
-                {
-                    float u = (float)x / RadialSegments;
-                    float theta = ThetaStart + u * ThetaLength;
-                    float sin = MathF.Sin(theta);
-                    float cos = MathF.Cos(theta);
-
-                    float px = RadiusBottom * sin;
-                    float pz = RadiusBottom * cos;
-                    float py = -halfHeight;
-
-                    positions.Add(px); positions.Add(py); positions.Add(pz);
-                    normals.Add(0f); normals.Add(1f); normals.Add(0f);
-                    uvs.Add((sin * 0.5f) + 0.5f); uvs.Add((cos * 0.5f) + 0.5f);
-                    index++;
-                }
-
-                // center
-                int centerIndex = index++;
-                positions.Add(0f); positions.Add(-halfHeight); positions.Add(0f);
+                float u     = (float)x / RadialSegments;
+                float theta = ThetaStart + u * ThetaLength;
+                float sin   = MathF.Sin(theta);
+                float cos   = MathF.Cos(theta);
+                positions.Add(RadiusBottom * sin); positions.Add(halfHeight); positions.Add(RadiusBottom * cos);
                 normals.Add(0f); normals.Add(1f); normals.Add(0f);
-                uvs.Add(0.5f); uvs.Add(0.5f);
+                uvs.Add(sin * 0.5f + 0.5f); uvs.Add(cos * 0.5f + 0.5f);
+                index++;
+            }
+            int centerIndex = index++;
+            positions.Add(0f); positions.Add(halfHeight); positions.Add(0f);
+            normals.Add(0f); normals.Add(1f); normals.Add(0f);
+            uvs.Add(0.5f); uvs.Add(0.5f);
+            for (int x = 0; x < RadialSegments; x++)
+            {
+                uint i1 = (uint)(startIndex + x);
+                uint i2 = (uint)(startIndex + ((x + 1) % RadialSegments));
+                indices.Add((uint)centerIndex); indices.Add(i2); indices.Add(i1);
+            }
+        }
 
-                for (int x = 0; x < RadialSegments; x++)
-                {
-                    uint i1 = (uint)(startIndex + x);
-                    uint i2 = (uint)(startIndex + ((x + 1) % RadialSegments));
-                    // triangle (center, i1, i2) to have outward-facing winding (bottom view)
-                    indices.Add((uint)centerIndex);
-                    indices.Add(i1);
-                    indices.Add(i2);
-                }
+        // cap at py=-halfHeight — RadiusTop face, normal -Y
+        if (CapNegY && RadiusTop > 0f)
+        {
+            int startIndex = index;
+            for (int x = 0; x < RadialSegments; x++)
+            {
+                float u     = (float)x / RadialSegments;
+                float theta = ThetaStart + u * ThetaLength;
+                float sin   = MathF.Sin(theta);
+                float cos   = MathF.Cos(theta);
+                positions.Add(RadiusTop * sin); positions.Add(-halfHeight); positions.Add(RadiusTop * cos);
+                normals.Add(0f); normals.Add(-1f); normals.Add(0f);
+                uvs.Add(sin * 0.5f + 0.5f); uvs.Add(cos * 0.5f + 0.5f);
+                index++;
+            }
+            int centerIndex = index++;
+            positions.Add(0f); positions.Add(-halfHeight); positions.Add(0f);
+            normals.Add(0f); normals.Add(-1f); normals.Add(0f);
+            uvs.Add(0.5f); uvs.Add(0.5f);
+            for (int x = 0; x < RadialSegments; x++)
+            {
+                uint i1 = (uint)(startIndex + x);
+                uint i2 = (uint)(startIndex + ((x + 1) % RadialSegments));
+                indices.Add((uint)centerIndex); indices.Add(i1); indices.Add(i2);
             }
         }
 

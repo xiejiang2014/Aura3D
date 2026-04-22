@@ -65,7 +65,7 @@ public abstract class Aura3DViewBase : global::Avalonia.OpenGL.Controls.OpenGlCo
     {
         if (isSizeChanged == true)
         {
-            var source = this.GetPresentationSource();
+            var source = this.GetVisualRoot();
 
             uint width = (uint)Bounds.Width;
             uint height = (uint)Bounds.Height;

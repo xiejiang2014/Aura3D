@@ -126,7 +126,12 @@ public class Camera : Node
     /// 使相机朝向指定目标点。
     /// </summary>
     /// <param name="target">目标位置。</param>
-    public void LookAt(Vector3 target)
+    public void LookAt(Vector3 target) => LookAt(target, Vector3.UnitY);
+
+    /// <summary>
+    /// 使相机朝向指定目标点，并指定世界上方向。
+    /// </summary>
+    public void LookAt(Vector3 target, Vector3 worldUp)
     {
         var camera = this;
 
@@ -134,7 +139,7 @@ public class Camera : Node
 
         Vector3 forward = Vector3.Normalize(target - cameraPos);
 
-        Vector3 up = Vector3.UnitY; // 假设世界上方向为Y轴
+        Vector3 up = worldUp;
 
         // 计算右向量
         Vector3 right = Vector3.Cross(forward, up);
